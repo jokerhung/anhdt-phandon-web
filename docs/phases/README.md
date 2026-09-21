@@ -9,7 +9,7 @@ Trạng thái: **Mới chia kế hoạch, chưa triển khai**.
 | Phase | Phạm vi | Phụ thuộc | Trạng thái |
 |---|---|---|---|
 | 01 | [Nền tảng, đăng nhập admin và thử in](phase-01-nen-tang-dang-nhap.md) | Không có | Đã triển khai; chờ in giấy thật |
-| 02 | [Google Sheets, nghiệp vụ và API tra cứu](phase-02-du-lieu-api.md) | 01 | Chưa bắt đầu |
+| 02 | [Google Sheets, nghiệp vụ và API tra cứu](phase-02-du-lieu-api.md) | 01 | Hoàn thành |
 | 03 | [Giao diện chọn File → Sheet → Lô → Kiện](phase-03-giao-dien-tra-cuu.md) | 02 | Chưa bắt đầu |
 | 04 | [Xem trước phiếu và in Ctrl+P](phase-04-xem-truoc-in.md) | 03 | Chưa bắt đầu |
 | 05 | [Nghiệm thu, triển khai và bàn giao](phase-05-nghiem-thu-trien-khai.md) | 04 | Chưa bắt đầu |
