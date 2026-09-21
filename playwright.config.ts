@@ -1,4 +1,4 @@
-﻿import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 const port = process.env.PLAYWRIGHT_PORT ?? "3100";
 const baseURL = `http://127.0.0.1:${port}`;
@@ -23,6 +23,8 @@ export default defineConfig({
           ADMIN_PASSWORD_HASH: "scrypt:v1:L6T3A_oc_mZXhxbAZF23YDLDxNWeM5uz41sIsgXj-fc:VIPgIFznjmfqb8i8mqZSZT5hzrdWhS25h3HApcjgEEe5oQveyIltIbgxIJyfZpVYc_LC5NIjVcv-cvjpdxZymw",
           APP_ORIGIN: baseURL,
           NEXT_DIST_DIR: ".next-playwright",
+          GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS ?? "",
+          GOOGLE_DRIVE_FOLDER_ID: process.env.GOOGLE_DRIVE_FOLDER_ID ?? "",
         },
       },
 });

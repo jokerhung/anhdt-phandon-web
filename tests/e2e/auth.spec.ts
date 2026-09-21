@@ -31,9 +31,9 @@ test("trang thử in ẩn toolbar trong print media và giữ tiếng Việt", a
   await page.getByLabel("Tên đăng nhập").fill("test-admin");
   await page.getByLabel("Mật khẩu").fill("test-password-at-least-16-characters");
   await page.getByRole("button", { name: "Đăng nhập" }).click();
-  await expect(page.getByRole("heading", { name: "Tra cứu kiện" })).toBeVisible();
-  await page.getByRole("link", { name: "Mở trang thử in A7/A4" }).click();
-  await expect(page).toHaveURL(/\/print-spike$/);
+  await expect(page.getByRole("heading", { name: "Tra cứu lô và kiện" })).toBeVisible();
+  await page.getByRole("link", { name: "Thử in" }).click();
+  await expect(page).toHaveURL(/\/print-spike/);
   await expect(page.getByText(/Ghi chú dài để kiểm tra/)).toBeVisible();
   await page.emulateMedia({ media: "print" });
   await expect(page.getByRole("heading", { name: "Thử in phiếu A7" })).toBeHidden();

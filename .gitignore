@@ -2,6 +2,7 @@ node_modules/
 .next/
 .next-playwright*/
 .next-live-smoke/
+.next-ui-explore/
 out/
 coverage/
 playwright-report/
