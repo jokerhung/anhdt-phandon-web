@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: oklch(0.985 0.006 155);
+  --foreground: oklch(0.2 0.025 155);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.025 155);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.025 155);
+  --primary: oklch(0.53 0.15 153);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.955 0.018 153);
+  --secondary-foreground: oklch(0.28 0.06 153);
+  --muted: oklch(0.96 0.008 155);
+  --muted-foreground: oklch(0.52 0.02 155);
+  --accent: oklch(0.94 0.025 153);
+  --accent-foreground: oklch(0.28 0.06 153);
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.89 0.012 155);
+  --input: oklch(0.89 0.012 155);
+  --ring: oklch(0.53 0.15 153);
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * { @apply border-border; }
+  html, body { min-height: 100%; }
+  body { @apply m-0 bg-background text-foreground antialiased; font-family: Arial, "Noto Sans", sans-serif; }
+  button, input { font: inherit; }
+}
+
+/* Keep the paper at its real size; only its viewport may scroll on narrow screens. */
+.slipViewport {
+  max-width: 100%;
+  overflow-x: auto;
+  padding-block: 4px 24px;
+}
+.slipViewport:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+@media screen and (max-height: 600px) {
+  .loginPage { align-items: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+.slip {
+  width: 74mm;
+  min-height: 105mm;
+  margin: 0 auto;
+  padding: 4mm;
+  color: black;
+  background: white;
+  border: 1px solid #bbb;
+  font-family: Arial, "Noto Sans", sans-serif;
+  font-size: 7.5pt;
+}
+.slipTitle { display: flex; justify-content: space-between; gap: 4mm; margin-bottom: 3mm; font-size: 10pt; }
+.slip table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.slip th, .slip td { border: 0.25mm solid #111; padding: 1mm; vertical-align: top; overflow-wrap: anywhere; }
+.slip th:nth-child(1) { width: 18%; }
+.slip th:nth-child(2) { width: 9%; }
+.slip th:nth-child(3) { width: 26%; }
+.slip th:nth-child(4) { width: 9%; }
+.slip th:nth-child(5) { width: 38%; }
+.slipFooter { display: flex; justify-content: space-between; gap: 2mm; margin-top: 3mm; font-weight: 700; }
+
+@page { size: 74mm 105mm; margin: 0; }
+@media print {
+  html, body { margin: 0; padding: 0; background: white; }
+  .noPrint { display: none !important; }
+  .printSpikePage { min-height: 0; padding: 0; background: white; }
+  .slipViewport { overflow: visible; padding: 0; outline: 0; }
+  .slip { width: 74mm; height: 105mm; min-height: 105mm; border: 0; break-inside: avoid; }
+  .printProfile-a7 { page: a7Profile; }
+  .printProfile-a7 .slip { margin: 0; }
+  .printProfile-a4 { page: a4Profile; }
+  .printProfile-a4 .slip { margin: 0; }
+}
+@page a7Profile { size: 74mm 105mm; margin: 0; }
+@page a4Profile { size: A4 portrait; margin: 12mm; }
