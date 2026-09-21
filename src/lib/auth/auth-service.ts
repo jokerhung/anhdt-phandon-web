@@ -22,7 +22,7 @@ async function initializeAuth(): Promise<AuthRuntime> {
   const env = getEnv();
   return {
     username: env.ADMIN_USERNAME,
-    verifier: await createPasswordVerifier(env.ADMIN_PASSWORD),
+    verifier: createPasswordVerifier(env.ADMIN_PASSWORD_HASH),
     sessions: new SessionStore({ ttlSeconds: env.SESSION_TTL_SECONDS }),
     limiter: new LoginRateLimiter(),
   };

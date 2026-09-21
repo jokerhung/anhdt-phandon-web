@@ -1,9 +1,6 @@
 import "server-only";
-import { randomBytes, scrypt as nodeScrypt, timingSafeEqual } from "node:crypto";
-import { promisify } from "node:util";
+import { verifyPasswordHash } from "@/lib/auth/password-hash";
 
-const scrypt = promisify(nodeScrypt);
-const KEY_LENGTH = 64;
 const MAX_CONCURRENT_CHECKS = 4;
 
 let activeChecks = 0;
@@ -27,16 +24,12 @@ export interface PasswordVerifier {
   verify(candidate: string): Promise<boolean>;
 }
 
-export async function createPasswordVerifier(password: string): Promise<PasswordVerifier> {
-  const salt = randomBytes(32);
-  const expected = (await scrypt(password, salt, KEY_LENGTH)) as Buffer;
-
+export function createPasswordVerifier(passwordHash: string): PasswordVerifier {
   return {
     async verify(candidate: string): Promise<boolean> {
       await acquireSlot();
       try {
-        const actual = (await scrypt(candidate, salt, KEY_LENGTH)) as Buffer;
-        return actual.length === expected.length && timingSafeEqual(actual, expected);
+        return await verifyPasswordHash(candidate, passwordHash);
       } finally {
         releaseSlot();
       }

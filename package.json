@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "hash-password": "node scripts/hash-password.mjs",
     "test:e2e": "playwright test && playwright test --config=playwright.rate-limit.config.ts"
   },
   "dependencies": {

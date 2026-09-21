@@ -96,7 +96,7 @@ Tệp thực tế: `web/.env`; chỉ commit `web/.env.example`. Ví dụ dưới
 
 ```dotenv
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=REPLACE_WITH_A_LONG_UNIQUE_PASSWORD
+ADMIN_PASSWORD_HASH=scrypt:v1:REPLACE_WITH_SALT:REPLACE_WITH_HASH
 SESSION_TTL_SECONDS=28800
 APP_ORIGIN=http://localhost:3000
 GOOGLE_APPLICATION_CREDENTIALS=/absolute/private/path/service-account.json
@@ -105,9 +105,9 @@ SHEETS_CACHE_TTL_SECONDS=60
 APP_TIME_ZONE=Asia/Ho_Chi_Minh
 ```
 
-- `ADMIN_USERNAME` và `ADMIN_PASSWORD` bắt buộc, không có mật khẩu mặc định. Startup từ chối nếu thiếu, để placeholder hoặc mật khẩu dưới 16 ký tự.
-- `.env` nằm ở root của ứng dụng `web/`, không nằm trong `src/`. Không dùng tiền tố `NEXT_PUBLIC_` cho bí mật; không truyền bí mật vào props, JSON hoặc cấu hình client. Tham chiếu: [Next.js environment variables](https://nextjs.org/docs/app/guides/environment-variables).
-- Giữ đúng yêu cầu mật khẩu trong `.env`; file này vẫn là bí mật dạng rõ trên server, phải giới hạn quyền đọc, không gửi qua chat, không log, không đưa vào image công khai.
+- `ADMIN_USERNAME` và `ADMIN_PASSWORD_HASH` bắt buộc, không có mật khẩu mặc định. Hash được tạo bằng `npm run hash-password` từ mật khẩu tối thiểu 16 ký tự; startup từ chối plaintext, placeholder hoặc hash sai định dạng.
+- `.env` nằm ở root của ứng dụng `web/`, không nằm trong `src/`. Không dùng tiền tố `NEXT_PUBLIC_` cho bí mật; không truyền hash hoặc bí mật vào props, JSON hay cấu hình client. Tham chiếu: [Next.js environment variables](https://nextjs.org/docs/app/guides/environment-variables).
+- `.env` chỉ giữ scrypt hash có salt, không giữ password rõ. Hash vẫn phải được coi là dữ liệu nhạy cảm: giới hạn quyền đọc, không gửi qua chat, không log, không đưa vào image công khai.
 - Khi triển khai thêm quy tắc ignore cho `web/.env*` trừ `.env.example`, `.next/`, `node_modules/` và các artifact kiểm thử. Khóa Google đặt ngoài repository, không tái đóng gói asset bí mật Android sang web.
 - Next.js có thứ tự ưu tiên nhiều nguồn env; tài liệu vận hành cần chỉ rõ không để `.env.local` hoặc env của process vô tình ghi đè cấu hình. Đổi tài khoản/mật khẩu phải restart service và vô hiệu hóa mọi phiên cũ.
 
@@ -115,7 +115,7 @@ APP_TIME_ZONE=Asia/Ho_Chi_Minh
 
 1. `GET /login`: form tên đăng nhập/mật khẩu, hỗ trợ trình quản lý mật khẩu; không lưu password vào localStorage.
 2. `POST /api/auth/login`: giới hạn kích thước đầu vào, kiểm tra Origin/CSRF, rate limit rồi xác thực ở server. Sai tên hay password cùng thông báo “Thông tin đăng nhập không đúng”.
-3. Dùng `crypto.scrypt` với salt ngẫu nhiên để tạo giá trị kiểm tra từ password cấu hình lúc startup; khi đăng nhập so sánh buffer cùng độ dài bằng `timingSafeEqual`. Giới hạn số phép kiểm tra đồng thời, không tự viết thuật toán mật mã.
+3. Dùng `crypto.scrypt` với salt ngẫu nhiên để tạo `ADMIN_PASSWORD_HASH` trước khi startup; khi đăng nhập derive candidate và so sánh buffer cùng độ dài bằng `timingSafeEqual`. Giới hạn số phép kiểm tra đồng thời, không tự viết thuật toán mật mã.
 4. Phiên opaque: token ngẫu nhiên tối thiểu 256 bit bằng Node crypto; cookie chỉ chứa token, phía server giữ hash token và hạn dùng. Cookie `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` trên HTTPS production; TTL mặc định 8 giờ tuyệt đối, không tự gia hạn vô hạn.
 5. MVP giữ session trong RAM có dọn hết hạn và giới hạn dung lượng: restart làm tất cả phiên hết hiệu lực. Chỉ dùng một process; trước khi scale nhiều process/serverless phải chuyển session và rate limit sang kho dùng chung, ví dụ Redis.
 6. `POST /api/auth/logout`: kiểm tra CSRF/Origin, thu hồi session server và xóa cookie. Token cũ không dùng lại được.
@@ -295,3 +295,4 @@ Test web E2E phải dựa trên giao diện đã chạy và được khám phá 
 - A7 là mặc định theo bản Android, A4 là profile dự phòng. Driver/máy in thực tế và số lượng nội dung tối đa là cổng nghiệm thu, không mặc định đã hỗ trợ.
 - Một kiện/một phiếu; phiếu tràn trang bị chặn có thông báo trong bản đầu, không mất dữ liệu âm thầm.
 - Chỉ lập kế hoạch ở lượt này; chưa scaffold ứng dụng, tạo `.env` thật, cài dependency hoặc triển khai server.
+

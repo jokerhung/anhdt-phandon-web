@@ -60,7 +60,7 @@ Chỉ đánh dấu hoàn thành khi có bằng chứng kiểm tra; ghi rõ phầ
 
 ### Công việc
 
-- [x] Tạo form `/login`, POST login/logout; đọc ADMIN_USERNAME và ADMIN_PASSWORD chỉ ở server, không có password mặc định.
+- [x] Tạo form `/login`, POST login/logout; đọc ADMIN_USERNAME và ADMIN_PASSWORD_HASH chỉ ở server, không có password mặc định hoặc plaintext trong env.
 - [x] Kiểm tra password bằng scrypt/timingSafeEqual theo PLAN.md; giới hạn kích thước input và số tác vụ xác thực đồng thời.
 - [x] Tạo token phiên ngẫu nhiên, lưu hash/expiry server; cookie HttpOnly, SameSite, Secure ở production và TTL tuyệt đối.
 - [x] Quản lý session trong RAM có dọn hết hạn/giới hạn dung lượng cho một Node process; restart thu hồi tất cả phiên.

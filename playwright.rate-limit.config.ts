@@ -1,4 +1,4 @@
-import { defineConfig, devices } from "@playwright/test";
+﻿import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = "http://127.0.0.1:3001";
 
@@ -14,9 +14,10 @@ export default defineConfig({
     reuseExistingServer: false,
     env: {
       ADMIN_USERNAME: "test-admin",
-      ADMIN_PASSWORD: "test-password-at-least-16-characters",
+      ADMIN_PASSWORD_HASH: "scrypt:v1:L6T3A_oc_mZXhxbAZF23YDLDxNWeM5uz41sIsgXj-fc:VIPgIFznjmfqb8i8mqZSZT5hzrdWhS25h3HApcjgEEe5oQveyIltIbgxIJyfZpVYc_LC5NIjVcv-cvjpdxZymw",
       APP_ORIGIN: baseURL,
       NEXT_DIST_DIR: ".next-playwright-rate",
     },
   },
 });
+

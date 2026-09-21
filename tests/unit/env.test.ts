@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { getEnv, resetEnvForTests } from "@/lib/server/env";
+import { hashPassword } from "@/lib/auth/password-hash";
 
 const originalEnv = { ...process.env };
 
@@ -11,14 +12,14 @@ afterEach(() => {
 function validEnv() {
   Object.assign(process.env, { NODE_ENV: "test" });
   process.env.ADMIN_USERNAME = "admin-test";
-  process.env.ADMIN_PASSWORD = "password-test-at-least-16-chars";
+  process.env.ADMIN_PASSWORD_HASH = "scrypt:v1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
   process.env.APP_ORIGIN = "http://localhost:3000";
 }
 
 describe("getEnv", () => {
   it("từ chối thiếu cấu hình bắt buộc mà không lộ giá trị", () => {
     delete process.env.ADMIN_USERNAME;
-    process.env.ADMIN_PASSWORD = "secret-value-that-must-not-appear";
+    process.env.ADMIN_PASSWORD_HASH = "not-a-valid-password-hash";
     process.env.APP_ORIGIN = "http://localhost:3000";
     resetEnvForTests();
 
@@ -26,19 +27,26 @@ describe("getEnv", () => {
     try {
       getEnv();
     } catch (error) {
-      expect(String(error)).not.toContain("secret-value-that-must-not-appear");
+      expect(String(error)).not.toContain("not-a-valid-password-hash");
     }
   });
 
-  it("từ chối password placeholder hoặc quá ngắn", () => {
+  it("từ chối password hash placeholder hoặc sai định dạng", () => {
     validEnv();
-    process.env.ADMIN_PASSWORD = "REPLACE_WITH_A_LONG_UNIQUE_PASSWORD";
+    process.env.ADMIN_PASSWORD_HASH = "scrypt:v1:REPLACE_WITH_SALT:REPLACE_WITH_HASH";
     resetEnvForTests();
-    expect(() => getEnv()).toThrow("ADMIN_PASSWORD");
+    expect(() => getEnv()).toThrow("ADMIN_PASSWORD_HASH");
 
-    process.env.ADMIN_PASSWORD = "too-short";
+    process.env.ADMIN_PASSWORD_HASH = "plaintext-is-not-accepted";
     resetEnvForTests();
-    expect(() => getEnv()).toThrow("ADMIN_PASSWORD");
+    expect(() => getEnv()).toThrow("ADMIN_PASSWORD_HASH");
+  });
+
+  it("chấp nhận hash được tạo bởi scrypt", async () => {
+    validEnv();
+    process.env.ADMIN_PASSWORD_HASH = await hashPassword("password-test-at-least-16-chars");
+    resetEnvForTests();
+    expect(getEnv().ADMIN_PASSWORD_HASH).toMatch(/^scrypt:v1:/);
   });
 
   it("parse TTL và trusted proxy an toàn", () => {
@@ -51,3 +59,4 @@ describe("getEnv", () => {
     expect(env.TRUST_PROXY).toBe(true);
   });
 });
+
