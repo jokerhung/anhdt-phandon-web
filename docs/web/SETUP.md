@@ -30,6 +30,8 @@ Cấp quyền file env/key chỉ cho tài khoản chạy service. Không đặt 
 
 ## 3. Kiểm tra và build
 
+Docker/Coolify lưu ý: repository hiện không có thư mục `public/` được track. Dockerfile không `COPY /app/public`; nếu thêm asset public sau này, phải track thư mục đó và bổ sung copy tương ứng.
+
 ```bash
 npm run check:production-env
 npm run typecheck

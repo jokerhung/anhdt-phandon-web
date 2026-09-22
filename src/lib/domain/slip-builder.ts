@@ -10,7 +10,9 @@ export function buildSlip(lo: string, kien: string, rows: SheetRow[], date?: str
       t: row.slSheet,
       khach: allocation.khach,
       soLuong: allocation.soLuong,
-      ghiChu: allocation.trangThai === "OK" ? "" : allocation.trangThai,
+      // Allocation depends only on the customer's quantity, never status text.
+      // Keep the printable notes cell empty regardless of OK or other remarks.
+      ghiChu: "",
     })));
   if (lines.length === 0) return null;
   return {

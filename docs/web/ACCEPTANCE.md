@@ -14,6 +14,9 @@ Phạm vi: mã nguồn local và Google live read-only đã cấu hình; chưa c
 | `npm run test:e2e` | Đạt, 9 test khi có Google credential live |
 | `npm run check:production-env` | Đạt với cấu hình production giả lập, không in secret |
 | `npm run build` | Đạt |
+| `docker compose -f docker-compose.yml config --quiet` | Đạt |
+| `docker build -t ... .` | Đạt; Dockerfile không còn COPY `/app/public` không tồn tại |
+| Container `/api/health` smoke | Đạt; HTTP 200, security headers, `private, no-store`, version trả đúng |
 
 Không ghi secret, đường dẫn key, fileId, sheetId hoặc tên nguồn live trong biên bản.
 

@@ -1,4 +1,4 @@
-# Phase 05 — Nghiệm thu, triển khai và bàn giao
+﻿# Phase 05 — Nghiệm thu, triển khai và bàn giao
 
 Trạng thái: **Hoàn thành hardening, tài liệu và nghiệm thu tự động; chưa triển khai production/giấy thật do thiếu host, domain và thiết bị**.
 
@@ -15,7 +15,7 @@ Trạng thái: **Hoàn thành hardening, tài liệu và nghiệm thu tự độ
 - [x] Chạy typecheck/lint/unit/integration/E2E/production build; kết quả và môi trường ghi tại `docs/web/ACCEPTANCE.md`.
 - [x] Đi lại tự động/live luồng login → file → sheet → lô → kiện → preview → PDF; 401/409, query giả, reset/request cũ và ánh xạ lỗi nguồn có test. Ctrl+P/driver thật còn mở.
 - [x] Rà soát cấu hình/bundle/HTML test, no-store, validation, React escaping, CSRF, rate limit, session và security headers; host/log production còn phải xác minh sau triển khai.
-- [ ] Chưa triển khai production: chưa có host/domain HTTPS/quyền triển khai. Đã bổ sung preflight và hướng dẫn một Node process, Secure cookie, APP_ORIGIN, trusted proxy, quyền env/key.
+- [ ] Chưa triển khai production: chưa có host/domain HTTPS/quyền triển khai. Đã bổ sung preflight và hướng dẫn một Node process, Secure cookie, APP_ORIGIN, trusted proxy, quyền env/key. Đã sửa lỗi Docker/Coolify build do `public/` không tồn tại; Docker build và container health smoke đạt.
 - [x] Tài liệu và cổng preflight quy định không dùng multi-process/serverless; nếu scale ngang phải thiết kế kho session/rate-limit/cache dùng chung trước.
 - [x] Viết `docs/web/SETUP.md` cho Google/env, dev/build/start, đổi password/key, restart, backup bí mật và rollback; không ghi giá trị bí mật thật.
 - [x] Viết `docs/web/ACCEPTANCE.md` ghi từng ca, kết quả, môi trường, bằng chứng và tồn đọng; giấy thật được giữ là cổng chưa đạt.
@@ -41,5 +41,6 @@ Bàn giao; tính năng ngoài PLAN.md cần yêu cầu/phạm vi riêng.
 - Tài liệu: `docs/web/SETUP.md`, `docs/web/OPERATIONS.md`, `docs/web/PRINTING.md`, `docs/web/ACCEPTANCE.md`. Cổng mở: host/domain HTTPS, quyền triển khai, mobile thật và máy in/giấy thật.
 - Chỉ đánh dấu hoàn thành khi các phần bắt buộc có bằng chứng; không xem mock/PDF là bằng chứng Google live/in giấy.
 - Không ghi secret hoặc dữ liệu nhạy cảm vào biên bản. Việc chia tài liệu không đồng nghĩa đã triển khai.
+
 
 

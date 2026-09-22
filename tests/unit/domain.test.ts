@@ -24,7 +24,7 @@ describe("domain parity", () => {
     expect(parsed.rows[2].allocations.map((item) => item.trangThai)).toEqual(["OK:50, 10 FPT", "OK:30. 30 FPT"]);
   });
 
-  it("index exact lot/package và slip giữ 0, ghi chú, T và tồn", () => {
+  it("index exact lot/package và slip giữ số lượng, T, tồn nhưng bỏ qua trạng thái", () => {
     const parsed = parseSheet(values, "080726");
     if (!parsed.ok) throw new Error(parsed.message);
     const index = LabelIndex.fromRows(parsed.rows);
@@ -33,8 +33,8 @@ describe("domain parity", () => {
     const slip = buildSlip("201", "6", parsed.rows, "08/07/2026");
     expect(slip).toMatchObject({ totalSku: 1, unallocated: 61, date: "08/07/2026" });
     expect(slip?.lines).toEqual([
-      { sku: "10372", t: "81", khach: "DLK", soLuong: "17", ghiChu: "OK:50, 10 FPT" },
-      { sku: "10372", t: "81", khach: "THC", soLuong: "3", ghiChu: "OK:30. 30 FPT" },
+      { sku: "10372", t: "81", khach: "DLK", soLuong: "17", ghiChu: "" },
+      { sku: "10372", t: "81", khach: "THC", soLuong: "3", ghiChu: "" },
     ]);
   });
 

@@ -18,7 +18,17 @@ export class DriveService {
     let pageToken: string | undefined;
     try {
       do {
-        const response = await withGoogleRetry(() => this.drive.files.list({ q: query, orderBy: "modifiedTime desc", fields: "nextPageToken,files(id,name,modifiedTime)", pageSize: 1000, pageToken }));
+        const response = await withGoogleRetry(() => this.drive.files.list({
+          q: query,
+          orderBy: "modifiedTime desc",
+          fields: "nextPageToken,files(id,name,mimeType,modifiedTime,trashed)",
+          pageSize: 1000,
+          pageToken,
+          // The folder may be shared or live in a Shared Drive. Without these
+          // flags Drive can silently omit otherwise visible files.
+          includeItemsFromAllDrives: true,
+          supportsAllDrives: true,
+        }));
         for (const file of response.data.files ?? []) if (file.id && file.name) files.push({ id: file.id, name: file.name, modifiedTime: file.modifiedTime ?? "" });
         pageToken = response.data.nextPageToken ?? undefined;
       } while (pageToken);
@@ -29,7 +39,7 @@ export class DriveService {
   async assertAllowed(fileId: string): Promise<void> {
     const folderId = getEnv().GOOGLE_DRIVE_FOLDER_ID?.trim();
     try {
-      const response = await withGoogleRetry(() => this.drive.files.get({ fileId, fields: "id,mimeType,trashed,parents" }));
+      const response = await withGoogleRetry(() => this.drive.files.get({ fileId, fields: "id,mimeType,trashed,parents", supportsAllDrives: true }));
       const file = response.data;
       const valid = file.id === fileId && file.mimeType === "application/vnd.google-apps.spreadsheet" && !file.trashed && (!folderId || file.parents?.includes(folderId));
       if (!valid) throw Object.assign(new Error("not allowed"), { code: 404 });
