@@ -62,9 +62,9 @@ export function parseSheet(values: string[][], sheetTitle = ""): ParseResult {
     const row = values[index];
     if (row.every((cell) => cell.trim() === "")) continue;
     const cell = (column: number) => row[column] ?? "";
-    if (cell(lo).trim() === "") {
-      return { ok: false, message: `${FORMAT_ERROR}: cột Lô rỗng ở hàng ${index + 1} (có thể do nguồn gviz làm mất dữ liệu)`, rowNumber: index + 1 };
-    }
+    // Skip incomplete/separator rows without stopping the rest of the sheet.
+    // Do not fill identifiers from the preceding row or treat "0" as empty.
+    if ([lo, kien, sku].some((column) => cell(column).trim() === "")) continue;
     const allocations: Allocation[] = units.map((unit) => ({ khach: rawHeader[unit], soLuong: cell(unit), trangThai: cell(unit + 1) }));
     rows.push({
       lo: cell(lo), kien: cell(kien), sku: cell(sku), moTa: moTa >= 0 ? cell(moTa) : "",

@@ -51,10 +51,14 @@ describe("domain parity", () => {
     });
   });
 
-  it("báo dòng Lô rỗng và không tạo slip chưa phân bổ", () => {
+  it("bỏ qua dòng thiếu định danh và không tạo slip chưa phân bổ", () => {
     const bad = values.map((row) => [...row]);
     bad[2][0] = "";
-    expect(parseSheet(bad)).toMatchObject({ ok: false, rowNumber: 3 });
+    const skipped = parseSheet(bad);
+    expect(skipped.ok).toBe(true);
+    if (!skipped.ok) throw new Error(skipped.message);
+    expect(skipped.rows).toHaveLength(2);
+    expect(skipped.rows.map((row) => row.lo)).toEqual(["701", "201"]);
     const parsed = parseSheet(values);
     if (!parsed.ok) throw new Error(parsed.message);
     expect(buildSlip("701", "679", parsed.rows)).toBeNull();
