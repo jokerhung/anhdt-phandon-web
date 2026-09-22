@@ -20,6 +20,9 @@ services:
       SHEETS_CACHE_TTL_SECONDS: ${SHEETS_CACHE_TTL_SECONDS:-60}
       APP_TIME_ZONE: ${APP_TIME_ZONE:-Asia/Ho_Chi_Minh}
       TRUST_PROXY: ${TRUST_PROXY:-false}
+      # Host path used by the Compose secret source; Coolify exposes this as
+      # an editable required environment variable.
+      GOOGLE_SERVICE_ACCOUNT_FILE: ${GOOGLE_SERVICE_ACCOUNT_FILE:?Set the Google key JSON path on the deployment server}
       # Editable in Coolify; default is the mounted secret path inside the container.
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/run/secrets/google_service_account}
       DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-docker-local}
