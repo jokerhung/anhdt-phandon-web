@@ -3,7 +3,7 @@
 ## Yêu cầu
 
 - Ưu tiên Chrome hoặc Edge mới trên máy tính đã cài driver máy in.
-- Profile mặc định là **A7 dọc 74 × 105 mm**. Profile **A4** phóng toàn bộ phiếu theo cùng tỷ lệ (297/105), vừa trang 210 × 297 mm; không thay đổi cách xuống dòng. Preview và bản in dùng chung tỷ lệ này.
+- Profile mặc định là **A7 ngang 105 × 74 mm**. Profile **A4 ngang** phóng toàn bộ phiếu theo cùng tỷ lệ, vừa trang 297 × 210 mm; không thay đổi cách xuống dòng. Preview và bản in dùng chung tỷ lệ này.
 - Web không tự chọn máy in và không thể ép mọi driver tuân thủ khổ giấy.
 
 ## Cách in
@@ -20,7 +20,7 @@
 
 ## Save as PDF
 
-Chọn **Save as PDF** trong hộp thoại in. PDF A7 phải có trang 74 × 105 mm; PDF A4 phải là 210 × 297 mm và phiếu bên trong phóng đều, không méo tỷ lệ.
+Chọn **Save as PDF** trong hộp thoại in. PDF A7 phải có trang 105 × 74 mm; PDF A4 phải là 297 × 210 mm và phiếu bên trong phóng đều, không méo tỷ lệ.
 
 CSS đặt `@page` margin bằng 0 để Chrome/Edge không có vùng chèn ngày, URL và số trang của trình duyệt. Trang web không thể tự bật/tắt các tùy chọn hệ thống như Scale hay Headers and footers; nếu trình duyệt/driver ghi đè cấu hình, chọn lại các thiết lập ở trên. Lô, kiện, ngày và tổng SKU thuộc nội dung phiếu nên vẫn được giữ.
 

@@ -57,8 +57,8 @@ test("trang thử in ẩn toolbar trong print media và giữ tiếng Việt", a
   expect(pdf.getPageCount()).toBe(1);
   const { width, height } = pdf.getPage(0).getSize();
   const mmToPoints = (mm: number) => (mm * 72) / 25.4;
-  expect(Math.abs(width - mmToPoints(74))).toBeLessThan(1);
-  expect(Math.abs(height - mmToPoints(105))).toBeLessThan(1);
+  expect(Math.abs(width - mmToPoints(105))).toBeLessThan(1);
+  expect(Math.abs(height - mmToPoints(74))).toBeLessThan(1);
 
   await page.emulateMedia({ media: "screen" });
   await page.getByRole("link", { name: "Profile A4" }).click();

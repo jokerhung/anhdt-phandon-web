@@ -20,14 +20,15 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
       rows.push(row);
     }
     row.quantities.set(line.khach, line.soLuong);
-    if (line.ghiChu) row.notes.push(customers.length > 1 ? `${line.khach}: ${line.ghiChu}` : line.ghiChu);
+    // Status/remark columns are intentionally not printed; allocation uses
+    // only the customer name and numeric quantity.
   }
 
   return (
     <article id={id} className={cn("slip shadow-xl shadow-black/10 print:shadow-none", !printable && "slipInvalid", className)} aria-label={label} data-print-valid={printable ? "true" : "false"}>
       <header className="slipTitle">
-        <div><div>LÔ: {slip.lo}</div><div>KIỆN: {slip.kien}</div></div>
-        <div className="slipMeta"><div>{slip.date ? `Ngày: ${slip.date}` : null}</div><div>TỔNG SKU: {slip.totalSku}</div></div>
+        <div><div>LÔ: <strong className="slipValue">{slip.lo}</strong></div><div>KIỆN: <strong className="slipValue">{slip.kien}</strong></div></div>
+        <div className="slipMeta"><div>{slip.date ? <>Ngày: <strong className="slipValue">{slip.date}</strong></> : null}</div><div>TỔNG SKU: <strong className="slipValue">{slip.totalSku}</strong></div></div>
       </header>
       <table>
         <colgroup>
@@ -37,12 +38,12 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
         </colgroup>
         <thead>
           <tr><th rowSpan={2} scope="col">SKU</th><th rowSpan={2} scope="col">TỔNG</th><th colSpan={Math.max(customers.length, 1)} scope="colgroup">KHÁCH</th><th rowSpan={2} scope="col">GHI CHÚ</th></tr>
-          <tr>{customers.length ? customers.map((customer) => <th className="slipCustomer" key={customer} scope="col">{customer}</th>) : <th scope="col">—</th>}</tr>
+          <tr>{customers.length ? customers.map((customer) => <th className="slipCustomer" key={customer} scope="col"><strong className="slipValue">{customer}</strong></th>) : <th scope="col">—</th>}</tr>
         </thead>
         <tbody>{rows.map((row, index) => (
           <tr key={`${row.sku}-${index}`}>
-            <td>{row.sku}</td><td>{row.total}</td>
-            {customers.map((customer) => <td key={customer}>{row.quantities.get(customer) ?? ""}</td>)}
+            <td><strong className="slipValue">{row.sku}</strong></td><td><strong className="slipValue">{row.total}</strong></td>
+            {customers.map((customer) => <td key={customer}>{row.quantities.get(customer) ? <strong className="slipValue">{row.quantities.get(customer)}</strong> : ""}</td>)}
             <td className="slipNotes">{row.notes.join("\n")}</td>
           </tr>
         ))}</tbody>

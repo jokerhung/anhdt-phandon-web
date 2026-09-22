@@ -74,9 +74,9 @@
 
 .slip {
   box-sizing: border-box;
-  width: 74mm;
-  height: 105mm;
-  min-height: 105mm;
+  width: 105mm;
+  height: 74mm;
+  min-height: 74mm;
   margin: 0 auto;
   padding: 2mm;
   color: black;
@@ -97,21 +97,20 @@
 
 /* Uniform fit: A7 artwork fills A4's height without changing table wrapping.
    Keep this outside print media so the preview uses the exact same scale. */
-.printProfile-a4 .slip { zoom: 2.8285714286; }
+.printProfile-a4 .slip { zoom: 2; }
 
-@page { size: 74mm 105mm; margin: 0; }
+@page { size: 105mm 74mm; margin: 0; }
 @media print {
   html, body { margin: 0; padding: 0; min-height: 0; background: white; }
   .noPrint { display: none !important; }
   .printSpikePage, .previewPage { min-height: 0; padding: 0; background: white; }
   .slipViewport { overflow: visible; padding: 0; outline: 0; }
-  .slip { width: 74mm; height: 105mm; min-height: 105mm; outline: 0; box-shadow: none; break-inside: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .slip { width: 105mm; height: 74mm; min-height: 74mm; outline: 0; box-shadow: none; break-inside: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .slip[data-print-valid="false"] { display: none !important; }
   .previewPage:has(.slip[data-print-valid="false"]) .printInvalidMessage { display: block; padding: 12mm; font-size: 12pt; font-weight: 700; }
-  .printProfile-a7, .printProfile-a7 .slip { page: a7Profile; }
   .printProfile-a7 .slip { margin: 0; }
   .printProfile-a4, .printProfile-a4 .slip { page: a4Profile; }
   .printProfile-a4 .slip { margin: 0; }
 }
-@page a7Profile { size: 74mm 105mm; margin: 0; }
-@page a4Profile { size: A4 portrait; margin: 0; }
+@page a7Profile { size: 105mm 74mm; margin: 0; }
+@page a4Profile { size: A4 landscape; margin: 0; }
