@@ -20,7 +20,8 @@ services:
       SHEETS_CACHE_TTL_SECONDS: ${SHEETS_CACHE_TTL_SECONDS:-60}
       APP_TIME_ZONE: ${APP_TIME_ZONE:-Asia/Ho_Chi_Minh}
       TRUST_PROXY: ${TRUST_PROXY:-false}
-      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google_service_account
+      # Editable in Coolify; default is the mounted secret path inside the container.
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/run/secrets/google_service_account}
       DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-docker-local}
     # Coolify's proxy routes the service domain to this internal port.
     # No host port binding, fixed container name, or custom proxy labels.
@@ -46,4 +47,5 @@ services:
 
 secrets:
   google_service_account:
-    file: ${GOOGLE_APPLICATION_CREDENTIALS:?Set the Google key JSON path on the Coolify deployment server}
+    # Host/deployment-server path; distinct from the application path above.
+    file: ${GOOGLE_SERVICE_ACCOUNT_FILE:-${GOOGLE_APPLICATION_CREDENTIALS:?Set GOOGLE_SERVICE_ACCOUNT_FILE to the Google key JSON path on the deployment server}}

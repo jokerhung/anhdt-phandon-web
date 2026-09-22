@@ -2,5 +2,7 @@
 # Do not select this override in Coolify.
 services:
   web:
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google_service_account
     ports:
       - "127.0.0.1:${PORT:-3003}:3000"
