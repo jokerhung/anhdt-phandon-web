@@ -1,14 +1,54 @@
 "use client";
 
-import { Printer } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, Loader2, Printer } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-export function PrintButton() {
+interface Props { targetId?: string; enabled?: boolean }
+
+export function PrintButton({ targetId, enabled = true }: Props) {
+  const [checking, setChecking] = useState(Boolean(targetId));
+  const [overflow, setOverflow] = useState(false);
+  const observerRef = useRef<ResizeObserver | null>(null);
+
+  useEffect(() => {
+    if (!targetId || !enabled) return;
+    let cancelled = false;
+    const measure = async () => {
+      setChecking(true);
+      await document.fonts.ready;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      if (cancelled) return;
+      const target = document.getElementById(targetId);
+      if (!target) { setOverflow(true); setChecking(false); return; }
+      const table = target.querySelector("table");
+      const footer = target.querySelector(".slipFooter");
+      const paddingBottom = Number.parseFloat(getComputedStyle(target).paddingBottom) || 0;
+      const contentBottom = Math.max(table?.getBoundingClientRect().bottom ?? 0, footer?.getBoundingClientRect().bottom ?? 0) - target.getBoundingClientRect().top + paddingBottom;
+      const isOverflowing = contentBottom > target.clientHeight + 1;
+      target.dataset.printValid = isOverflowing ? "false" : "true";
+      setOverflow(isOverflowing);
+      setChecking(false);
+    };
+    void measure();
+    const target = document.getElementById(targetId);
+    if (target && typeof ResizeObserver !== "undefined") {
+      observerRef.current = new ResizeObserver(() => void measure());
+      observerRef.current.observe(target);
+    }
+    return () => { cancelled = true; observerRef.current?.disconnect(); };
+  }, [enabled, targetId]);
+
+  const ready = enabled && !checking && !overflow;
   return (
-    <Button className="w-full shrink-0 sm:w-auto" type="button" size="lg" onClick={() => window.print()}>
-      <Printer />
-      <span className="sm:hidden">In phiếu</span>
-      <span className="hidden sm:inline">In / Ctrl+P</span>
-    </Button>
+    <div className="space-y-2">
+      <Button className="w-full shrink-0 sm:w-auto" type="button" size="lg" disabled={!ready} onClick={() => { if (ready) window.print(); }}>
+        {checking ? <Loader2 className="animate-spin" /> : <Printer />}
+        <span className="sm:hidden">{checking ? "Đang kiểm tra…" : "In phiếu"}</span>
+        <span className="hidden sm:inline">{checking ? "Đang kiểm tra bố cục…" : "In / Ctrl+P"}</span>
+      </Button>
+      {overflow ? <Alert variant="destructive" className="max-w-lg"><AlertTriangle /><AlertDescription>Phiếu vượt quá vùng A7. Hãy dùng profile A4 hoặc điều chỉnh dữ liệu trước khi in.</AlertDescription></Alert> : null}
+    </div>
   );
 }

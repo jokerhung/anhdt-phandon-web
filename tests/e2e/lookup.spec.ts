@@ -33,7 +33,12 @@ test("chọn File → Sheet → Lô → Kiện và điều hướng preview", as
   await expect(preview).toBeEnabled();
   await preview.click();
   await expect(page).toHaveURL(/\/preview\?.*fileId=.*sheetId=.*snapshotId=.*lot=.*package=/);
-  await expect(page.getByRole("heading", { name: "Dữ liệu xem trước đã sẵn sàng" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Xem trước phiếu phân đơn" })).toBeVisible();
+  await expect(page.getByLabel("Phiếu phân đơn")).toBeVisible();
+  await expect(page.getByText("LÔ:", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /In \/ Ctrl\+P/ })).toBeEnabled();
+  await page.reload();
+  await expect(page.getByLabel("Phiếu phân đơn")).toBeVisible();
 });
 
 test("ghi nhớ file và sheet đã chọn sau khi reload trang", async ({ page }) => {

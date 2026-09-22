@@ -73,7 +73,9 @@
 }
 
 .slip {
+  box-sizing: border-box;
   width: 74mm;
+  height: 105mm;
   min-height: 105mm;
   margin: 0 auto;
   padding: 4mm;
@@ -85,24 +87,29 @@
 }
 .slipTitle { display: flex; justify-content: space-between; gap: 4mm; margin-bottom: 3mm; font-size: 10pt; }
 .slip table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.slip th, .slip td { border: 0.25mm solid #111; padding: 1mm; vertical-align: top; overflow-wrap: anywhere; }
+.slip th, .slip td { border: 0.25mm solid #111; padding: 1mm; vertical-align: top; overflow-wrap: anywhere; white-space: pre-wrap; }
 .slip th:nth-child(1) { width: 18%; }
 .slip th:nth-child(2) { width: 9%; }
 .slip th:nth-child(3) { width: 26%; }
 .slip th:nth-child(4) { width: 9%; }
 .slip th:nth-child(5) { width: 38%; }
 .slipFooter { display: flex; justify-content: space-between; gap: 2mm; margin-top: 3mm; font-weight: 700; }
+.printInvalidMessage { display: none; }
 
-@page { size: 74mm 105mm; margin: 0; }
+@page { size: var(--print-page-size, 74mm 105mm); margin: var(--print-page-margin, 0); }
 @media print {
   html, body { margin: 0; padding: 0; background: white; }
   .noPrint { display: none !important; }
-  .printSpikePage { min-height: 0; padding: 0; background: white; }
+  .printSpikePage, .previewPage { min-height: 0; padding: 0; background: white; }
   .slipViewport { overflow: visible; padding: 0; outline: 0; }
   .slip { width: 74mm; height: 105mm; min-height: 105mm; border: 0; break-inside: avoid; }
-  .printProfile-a7 { page: a7Profile; }
+  .slip[data-print-valid="false"] { display: none !important; }
+  .previewPage:has(.slip[data-print-valid="false"]) .printInvalidMessage { display: block; padding: 12mm; font-size: 12pt; font-weight: 700; }
+  .printProfile-a7 { --print-page-size: 74mm 105mm; --print-page-margin: 0; }
+  .printProfile-a7, .printProfile-a7 .slip { page: a7Profile; }
   .printProfile-a7 .slip { margin: 0; }
-  .printProfile-a4 { page: a4Profile; }
+  .printProfile-a4 { --print-page-size: A4 portrait; --print-page-margin: 12mm; }
+  .printProfile-a4, .printProfile-a4 .slip { page: a4Profile; }
   .printProfile-a4 .slip { margin: 0; }
 }
 @page a7Profile { size: 74mm 105mm; margin: 0; }

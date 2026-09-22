@@ -25,5 +25,5 @@ export function getSlip(fileId: string, sheetId: number, snapshotId: string, lot
   const rows = snapshot.index.rows(lot, packageId);
   if (rows.length === 0) throw new DomainDataError("PACKAGE_NOT_FOUND", "Kiện không tồn tại trong lô đã chọn.", 404);
   const slip = buildSlip(lot, packageId, rows, formatSlipDate(now, getEnv().APP_TIME_ZONE));
-  return slip ? { printable: true, slip, snapshotId, fetchedAt: snapshot.fetchedAt } : { printable: false, reason: "UNALLOCATED", message: "Chưa phân bổ", snapshotId, fetchedAt: snapshot.fetchedAt };
+  return slip ? { printable: true, slip, source: { sheetTitle: snapshot.title }, snapshotId, fetchedAt: snapshot.fetchedAt } : { printable: false, reason: "UNALLOCATED", message: "Chưa phân bổ", source: { sheetTitle: snapshot.title }, snapshotId, fetchedAt: snapshot.fetchedAt };
 }

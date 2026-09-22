@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, FileText, Ruler } from "lucide-react";
 import { PrintButton } from "@/components/PrintButton";
+import { SlipPreview } from "@/components/SlipPreview";
+import type { Slip } from "@/lib/domain";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,12 +13,15 @@ import { cn } from "@/lib/utils";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const rows = [
-  ["SP-001", "12", "Cửa hàng Hà Nội", "6", "Giao buổi sáng"],
-  ["SP-001", "12", "Đại lý Minh Anh", "6", "Kiểm tra kỹ tem trước khi giao"],
-  ["SP-025", "8", "Kho Đà Nẵng", "0", "Số lượng 0 vẫn phải hiển thị"],
-  ["SP-106", "20", "Khách lẻ", "5", "Ghi chú dài để kiểm tra việc xuống dòng tiếng Việt, dấu và chiều cao thực tế của phiếu khi xuất PDF hoặc in giấy."],
-];
+const prototypeSlip: Slip = {
+  lo: "106 THC", kien: "00123", date: "21/09/2026", totalSku: 3, unallocated: 9,
+  lines: [
+    { sku: "SP-001", t: "12", khach: "Cửa hàng Hà Nội", soLuong: "6", ghiChu: "Giao buổi sáng" },
+    { sku: "SP-001", t: "12", khach: "Đại lý Minh Anh", soLuong: "6", ghiChu: "Kiểm tra kỹ tem trước khi giao" },
+    { sku: "SP-025", t: "8", khach: "Kho Đà Nẵng", soLuong: "0", ghiChu: "Số lượng 0 vẫn phải hiển thị" },
+    { sku: "SP-106", t: "20", khach: "Khách lẻ", soLuong: "5", ghiChu: "Ghi chú dài để kiểm tra việc xuống dòng tiếng Việt, dấu và chiều cao thực tế của phiếu khi xuất PDF hoặc in giấy." },
+  ],
+};
 
 export default async function PrintSpikePage({ searchParams }: { searchParams: Promise<{ profile?: string }> }) {
   if (process.env.NODE_ENV !== "development") notFound();
@@ -39,7 +44,7 @@ export default async function PrintSpikePage({ searchParams }: { searchParams: P
               <CardTitle className="text-2xl">Thử in phiếu {profile.toUpperCase()}</CardTitle>
               <CardDescription>{profile === "a7" ? "A7 dọc 74 × 105 mm." : "A4 chứa phiếu A7 kích thước thật, không kéo giãn."} Tắt header/footer của trình duyệt trước khi in.</CardDescription>
             </div>
-            <PrintButton />
+            <PrintButton targetId="prototype-slip" />
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             <nav className="grid gap-3 sm:grid-cols-2" aria-label="Chọn profile in">
@@ -61,19 +66,7 @@ export default async function PrintSpikePage({ searchParams }: { searchParams: P
       </div>
 
       <div className="slipViewport" role="region" aria-label="Vùng xem phiếu; cuộn ngang nếu màn hình hẹp" tabIndex={0}>
-      <article className="slip shadow-xl shadow-black/10 print:shadow-none" aria-label="Phiếu phân đơn thử nghiệm">
-        <header className="slipTitle">
-          <div><strong>LÔ:</strong> 106 THC</div>
-          <div><strong>KIỆN:</strong> 00123</div>
-        </header>
-        <table>
-          <thead><tr><th>SKU</th><th>T</th><th>KHÁCH</th><th>SL</th><th>GHI CHÚ</th></tr></thead>
-          <tbody>{rows.map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody>
-        </table>
-        <footer className="slipFooter">
-          <span>Ngày: 21/09/2026</span><span>Tổng SKU: 3</span><span>Tồn: 9</span>
-        </footer>
-      </article>
+        <SlipPreview id="prototype-slip" slip={prototypeSlip} label="Phiếu phân đơn thử nghiệm" />
       </div>
     </main>
   );
