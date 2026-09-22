@@ -1,0 +1,49 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-docker-local}
+    restart: unless-stopped
+    init: true
+    # Keep one instance: sessions and rate limits are stored in process memory.
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?Set a non-default admin username in Coolify}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:?Set the scrypt password hash in Coolify}
+      APP_ORIGIN: ${APP_ORIGIN:?Set the public HTTPS origin without a port or trailing slash}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-28800}
+      GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID:-}
+      SHEETS_CACHE_TTL_SECONDS: ${SHEETS_CACHE_TTL_SECONDS:-60}
+      APP_TIME_ZONE: ${APP_TIME_ZONE:-Asia/Ho_Chi_Minh}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google_service_account
+      DEPLOYMENT_VERSION: ${DEPLOYMENT_VERSION:-docker-local}
+    # Coolify's proxy routes the service domain to this internal port.
+    # No host port binding, fixed container name, or custom proxy labels.
+    expose:
+      - "3000"
+    secrets:
+      - google_service_account
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health', {signal: AbortSignal.timeout(5000)}).then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+secrets:
+  google_service_account:
+    file: ${GOOGLE_APPLICATION_CREDENTIALS:?Set the Google key JSON path on the Coolify deployment server}

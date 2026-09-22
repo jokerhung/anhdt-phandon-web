@@ -49,6 +49,16 @@ describe("getEnv", () => {
     expect(getEnv().ADMIN_PASSWORD_HASH).toMatch(/^scrypt:v1:/);
   });
 
+  it("từ chối production không HTTPS, username mặc định hoặc thiếu Google credential", () => {
+    validEnv();
+    Object.assign(process.env, { NODE_ENV: "production" });
+    process.env.ADMIN_USERNAME = "admin";
+    process.env.APP_ORIGIN = "http://example.com";
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    resetEnvForTests();
+    expect(() => getEnv()).toThrow("Cấu hình máy chủ không hợp lệ");
+  });
+
   it("parse TTL và trusted proxy an toàn", () => {
     validEnv();
     process.env.SESSION_TTL_SECONDS = "3600";

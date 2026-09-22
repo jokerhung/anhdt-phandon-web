@@ -1,6 +1,19 @@
 import { expect, test } from "@playwright/test";
 import { PDFDocument } from "pdf-lib";
 
+test("security headers và health endpoint không lộ bí mật", async ({ page, request }) => {
+  const response = await request.get("/api/health");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["cache-control"]).toContain("private");
+  const body = await response.json();
+  expect(body).toMatchObject({ status: "ok", service: "ugreen-phan-don-web" });
+  expect(JSON.stringify(body)).not.toContain("PRIVATE KEY");
+  const pageResponse = await page.goto("/login");
+  expect(pageResponse?.headers()["x-frame-options"]).toBe("DENY");
+  expect(pageResponse?.headers()["x-content-type-options"]).toBe("nosniff");
+  expect(pageResponse?.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
+});
+
 test("form đăng nhập chạy thật và logout thu hồi phiên", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/login\?next=/);

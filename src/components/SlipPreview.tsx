@@ -10,23 +10,44 @@ interface Props {
 }
 
 export function SlipPreview({ slip, label = "Phiếu phân đơn", className, printable = true, id }: Props) {
+  const customers = [...new Set(slip.lines.map((line) => line.khach))];
+  const rows: { sku: string; total: string; quantities: Map<string, string>; notes: string[] }[] = [];
+  for (const line of slip.lines) {
+    // Never add the repeated sheet total once per customer, or overwrite a duplicate allocation.
+    let row = rows.find((item) => item.sku === line.sku && item.total === line.t && !item.quantities.has(line.khach));
+    if (!row) {
+      row = { sku: line.sku, total: line.t, quantities: new Map(), notes: [] };
+      rows.push(row);
+    }
+    row.quantities.set(line.khach, line.soLuong);
+    if (line.ghiChu) row.notes.push(customers.length > 1 ? `${line.khach}: ${line.ghiChu}` : line.ghiChu);
+  }
+
   return (
     <article id={id} className={cn("slip shadow-xl shadow-black/10 print:shadow-none", !printable && "slipInvalid", className)} aria-label={label} data-print-valid={printable ? "true" : "false"}>
       <header className="slipTitle">
-        <div><strong>LÔ:</strong> {slip.lo}</div>
-        <div><strong>KIỆN:</strong> {slip.kien}</div>
+        <div><div>LÔ: {slip.lo}</div><div>KIỆN: {slip.kien}</div></div>
+        <div className="slipMeta"><div>{slip.date ? `Ngày: ${slip.date}` : null}</div><div>TỔNG SKU: {slip.totalSku}</div></div>
       </header>
       <table>
-        <thead><tr><th>SKU</th><th>T</th><th>KHÁCH</th><th>SL</th><th>GHI CHÚ</th></tr></thead>
-        <tbody>{slip.lines.map((line, index) => (
-          <tr key={`${line.sku}-${line.khach}-${index}`}>
-            <td>{line.sku}</td><td>{line.t}</td><td>{line.khach}</td><td>{line.soLuong}</td><td>{line.ghiChu}</td>
+        <colgroup>
+          <col style={{ width: "14%" }} /><col style={{ width: "14%" }} />
+          {customers.map((customer) => <col key={customer} style={{ width: `${43 / customers.length}%` }} />)}
+          <col style={{ width: "29%" }} />
+        </colgroup>
+        <thead>
+          <tr><th rowSpan={2} scope="col">SKU</th><th rowSpan={2} scope="col">TỔNG</th><th colSpan={Math.max(customers.length, 1)} scope="colgroup">KHÁCH</th><th rowSpan={2} scope="col">GHI CHÚ</th></tr>
+          <tr>{customers.length ? customers.map((customer) => <th className="slipCustomer" key={customer} scope="col">{customer}</th>) : <th scope="col">—</th>}</tr>
+        </thead>
+        <tbody>{rows.map((row, index) => (
+          <tr key={`${row.sku}-${index}`}>
+            <td>{row.sku}</td><td>{row.total}</td>
+            {customers.map((customer) => <td key={customer}>{row.quantities.get(customer) ?? ""}</td>)}
+            <td className="slipNotes">{row.notes.join("\n")}</td>
           </tr>
         ))}</tbody>
       </table>
-      <footer className="slipFooter">
-        {slip.date ? <span>Ngày: {slip.date}</span> : null}<span>Tổng SKU: {slip.totalSku}</span>{slip.unallocated > 0 ? <span>Tồn: {slip.unallocated}</span> : null}
-      </footer>
+      {slip.unallocated > 0 ? <footer className="slipFooter">Tồn: {slip.unallocated}</footer> : null}
     </article>
   );
 }

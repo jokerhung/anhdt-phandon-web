@@ -42,7 +42,7 @@ export default async function PrintSpikePage({ searchParams }: { searchParams: P
                 <Badge variant="outline"><Ruler className="mr-1 size-3.5" /> Scale 100%</Badge>
               </div>
               <CardTitle className="text-2xl">Thử in phiếu {profile.toUpperCase()}</CardTitle>
-              <CardDescription>{profile === "a7" ? "A7 dọc 74 × 105 mm." : "A4 chứa phiếu A7 kích thước thật, không kéo giãn."} Tắt header/footer của trình duyệt trước khi in.</CardDescription>
+              <CardDescription>{profile === "a7" ? "A7 dọc 74 × 105 mm." : "Phiếu phóng theo tỷ lệ vừa trang A4, giống preview."} Chọn lề None và tắt header/footer. Dùng Fit to page nếu máy in cần co vào vùng in được.</CardDescription>
             </div>
             <PrintButton targetId="prototype-slip" />
           </CardHeader>
@@ -54,7 +54,7 @@ export default async function PrintSpikePage({ searchParams }: { searchParams: P
                   <Button key={item} asChild variant={selected ? "default" : "outline"} className="h-auto min-w-0 justify-start whitespace-normal px-3 py-3 sm:px-4">
                     <Link aria-current={selected ? "page" : undefined} href={`/print-spike?profile=${item}`}>
                       {selected ? <Check /> : <Ruler />}
-                      <span className="text-left"><span className="block font-semibold">Profile {item.toUpperCase()}</span><span className={cn("block text-xs", selected ? "text-primary-foreground/75" : "text-muted-foreground")}>{item === "a7" ? "Trang 74 × 105 mm" : "Phiếu A7 trên trang 210 × 297 mm"}</span></span>
+                      <span className="text-left"><span className="block font-semibold">Profile {item.toUpperCase()}</span><span className={cn("block text-xs", selected ? "text-primary-foreground/75" : "text-muted-foreground")}>{item === "a7" ? "Trang 74 × 105 mm" : "Phóng theo tỷ lệ vừa trang A4"}</span></span>
                     </Link>
                   </Button>
                 );

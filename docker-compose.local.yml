@@ -1,0 +1,6 @@
+# Optional host port for local Docker + cloudflared running on the host.
+# Do not select this override in Coolify.
+services:
+  web:
+    ports:
+      - "127.0.0.1:${PORT:-3003}:3000"

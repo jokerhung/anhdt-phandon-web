@@ -3,7 +3,7 @@
 ## Yêu cầu
 
 - Ưu tiên Chrome hoặc Edge mới trên máy tính đã cài driver máy in.
-- Profile mặc định là **A7 dọc 74 × 105 mm**. Nếu driver không có A7/custom paper, dùng profile **A4**; phiếu vẫn giữ đúng kích thước 74 × 105 mm trên trang A4.
+- Profile mặc định là **A7 dọc 74 × 105 mm**. Profile **A4** phóng toàn bộ phiếu theo cùng tỷ lệ (297/105), vừa trang 210 × 297 mm; không thay đổi cách xuống dòng. Preview và bản in dùng chung tỷ lệ này.
 - Web không tự chọn máy in và không thể ép mọi driver tuân thủ khổ giấy.
 
 ## Cách in
@@ -13,20 +13,22 @@
 3. Bấm **In / Ctrl+P** hoặc nhấn `Ctrl+P`.
 4. Trong hộp thoại in:
    - Chọn đúng máy in và khổ giấy tương ứng.
-   - Scale/Tỷ lệ: **100%** hoặc **Actual size**.
+   - Trang đã tự fit vào profile được chọn. Dùng **100%** để giữ đúng kích thước preview; chọn **Fit to page / Fit to printable area** nếu driver cần thu nhỏ theo vùng in được của máy in.
    - Tắt **Headers and footers**.
-   - Margin: None/0 cho A7; với A4 dùng thiết lập mặc định theo preview.
+   - Margin: **None/0** cho cả A7 và A4.
 5. In thử một phiếu và đo thực tế trước khi in hàng loạt.
 
 ## Save as PDF
 
-Chọn **Save as PDF** trong hộp thoại in. PDF A7 phải có trang 74 × 105 mm; PDF A4 phải là 210 × 297 mm và phiếu bên trong không bị kéo giãn.
+Chọn **Save as PDF** trong hộp thoại in. PDF A7 phải có trang 74 × 105 mm; PDF A4 phải là 210 × 297 mm và phiếu bên trong phóng đều, không méo tỷ lệ.
+
+CSS đặt `@page` margin bằng 0 để Chrome/Edge không có vùng chèn ngày, URL và số trang của trình duyệt. Trang web không thể tự bật/tắt các tùy chọn hệ thống như Scale hay Headers and footers; nếu trình duyệt/driver ghi đè cấu hình, chọn lại các thiết lập ở trên. Lô, kiện, ngày và tổng SKU thuộc nội dung phiếu nên vẫn được giữ.
 
 ## Phiếu quá khổ
 
 Sau khi font và layout sẵn sàng, trang đo chiều cao nội dung. Nếu phiếu vượt vùng A7, nút In bị khóa và print stylesheet ẩn phiếu để tránh cắt mất dòng/ghi chú. Hãy:
 
-- Thử profile A4 nếu mục đích là kiểm tra/đối chiếu.
+- Đổi A7 sang A4 chỉ phóng theo tỷ lệ, không tăng số dòng chứa được.
 - Kiểm tra ghi chú hoặc dữ liệu bất thường.
 - Không giảm scale tùy ý vì sẽ làm sai kích thước phiếu.
 

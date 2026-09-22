@@ -12,7 +12,7 @@ Trạng thái: **Mới chia kế hoạch, chưa triển khai**.
 | 02 | [Google Sheets, nghiệp vụ và API tra cứu](phase-02-du-lieu-api.md) | 01 | Hoàn thành |
 | 03 | [Giao diện chọn File → Sheet → Lô → Kiện](phase-03-giao-dien-tra-cuu.md) | 02 | Hoàn thành; chờ nghiệm thu thiết bị thật |
 | 04 | [Xem trước phiếu và in Ctrl+P](phase-04-xem-truoc-in.md) | 03 | Hoàn thành phần mềm; chờ nghiệm thu giấy thật |
-| 05 | [Nghiệm thu, triển khai và bàn giao](phase-05-nghiem-thu-trien-khai.md) | 04 | Chưa bắt đầu |
+| 05 | [Nghiệm thu, triển khai và bàn giao](phase-05-nghiem-thu-trien-khai.md) | 04 | Sẵn sàng triển khai; chờ host/HTTPS và giấy thật |
 
 Thực hiện 01 → 02 → 03 → 04 → 05. Nếu Phase 01 chưa có máy in, có thể tiếp tục backend/UI sau khi nền tảng/auth đạt, nhưng giữ nghiệm thu giấy chưa đạt đến Phase 04. Parser/fixture trong Phase 02 có thể làm khi chưa có Google key; không xem mock là bằng chứng Google live.
 
@@ -40,5 +40,6 @@ Thực hiện 01 → 02 → 03 → 04 → 05. Nếu Phase 01 chưa có máy in, 
 - Env và Google key chỉ ở server; không tạo/đọc bí mật thật khi lập kế hoạch.
 - Test theo từng phase, không dồn đến cuối. Web E2E dựa trên UI đã khám phá; mobile test nếu có phải theo ARTEMIS trong AGENTS.md.
 - PDF không thay thế nghiệm thu máy in thật; build thành công không đồng nghĩa đã triển khai.
+
 
 

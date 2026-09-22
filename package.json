@@ -6,14 +6,16 @@
     "node": ">=22.0.0 <25"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/run-next.mjs dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/run-next.mjs start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "hash-password": "node scripts/hash-password.mjs",
+    "check:production-env": "node scripts/check-production-env.mjs",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run test:e2e && npm run build",
     "test:e2e": "playwright test && playwright test --config=playwright.rate-limit.config.ts"
   },
   "dependencies": {

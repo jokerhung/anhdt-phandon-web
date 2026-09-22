@@ -5,7 +5,11 @@ export function hasValidOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
   if (!origin) return false;
   try {
-    return new URL(origin).origin === new URL(getEnv().APP_ORIGIN).origin;
+    const parsed = new URL(origin);
+    // Browser Origin headers are serialized origins, never URLs with paths or credentials.
+    if (parsed.origin !== origin || !["http:", "https:"].includes(parsed.protocol)) return false;
+    const env = getEnv();
+    return origin === new URL(env.APP_ORIGIN).origin || env.ALLOWED_ORIGINS.includes(origin);
   } catch {
     return false;
   }

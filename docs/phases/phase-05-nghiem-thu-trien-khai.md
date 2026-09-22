@@ -1,6 +1,6 @@
 # Phase 05 — Nghiệm thu, triển khai và bàn giao
 
-Trạng thái: **Chưa bắt đầu**.
+Trạng thái: **Hoàn thành hardening, tài liệu và nghiệm thu tự động; chưa triển khai production/giấy thật do thiếu host, domain và thiết bị**.
 
 ## Đầu vào và phạm vi
 
@@ -12,24 +12,24 @@ Trạng thái: **Chưa bắt đầu**.
 
 ### Công việc
 
-- [ ] Chạy typecheck/lint/unit/integration/E2E/production build; ghi kết quả từng lệnh và phiên bản môi trường.
-- [ ] Đi lại toàn luồng login → file → sheet → lô → kiện → preview → in; kiểm lỗi mạng/quota, 401/409 và đổi nguồn nhanh.
-- [ ] Rà soát bí mật trong git/bundle/HTML/log; kiểm tra cache riêng, input validation, XSS từ ô Sheet, CSRF, rate limit và thu hồi session.
-- [ ] Triển khai production một Node process sau reverse proxy HTTPS; xác minh cookie Secure, APP_ORIGIN, trusted proxy và quyền đọc file env/key.
-- [ ] Không dùng multi-process/serverless với session RAM; nếu môi trường yêu cầu thì phải thiết kế kho session/rate-limit dùng chung trước triển khai.
-- [ ] Viết SETUP.md cho setup Google/env, dev/build/start, đổi password/key, restart, backup bí mật và rollback; không ghi giá trị bí mật thật.
-- [ ] Viết ACCEPTANCE.md ghi từng ca, kết quả, ngày, môi trường, bằng chứng và tồn đọng; tổng hợp giấy thật từ Phase 04.
-- [ ] Xác nhận Android không bị ảnh hưởng; bàn giao hướng dẫn và các giới hạn browser/driver.
+- [x] Chạy typecheck/lint/unit/integration/E2E/production build; kết quả và môi trường ghi tại `docs/web/ACCEPTANCE.md`.
+- [x] Đi lại tự động/live luồng login → file → sheet → lô → kiện → preview → PDF; 401/409, query giả, reset/request cũ và ánh xạ lỗi nguồn có test. Ctrl+P/driver thật còn mở.
+- [x] Rà soát cấu hình/bundle/HTML test, no-store, validation, React escaping, CSRF, rate limit, session và security headers; host/log production còn phải xác minh sau triển khai.
+- [ ] Chưa triển khai production: chưa có host/domain HTTPS/quyền triển khai. Đã bổ sung preflight và hướng dẫn một Node process, Secure cookie, APP_ORIGIN, trusted proxy, quyền env/key.
+- [x] Tài liệu và cổng preflight quy định không dùng multi-process/serverless; nếu scale ngang phải thiết kế kho session/rate-limit/cache dùng chung trước.
+- [x] Viết `docs/web/SETUP.md` cho Google/env, dev/build/start, đổi password/key, restart, backup bí mật và rollback; không ghi giá trị bí mật thật.
+- [x] Viết `docs/web/ACCEPTANCE.md` ghi từng ca, kết quả, môi trường, bằng chứng và tồn đọng; giấy thật được giữ là cổng chưa đạt.
+- [x] Không sửa mã Android; tài liệu bàn giao ghi giới hạn browser/driver và nhu cầu regression Android riêng nếu phát hành Android.
 
 ### Đầu ra
 
-Bản web production được phép triển khai, SETUP.md, PRINTING.md và ACCEPTANCE.md hoàn chỉnh.
+Bản web sẵn sàng triển khai sau khi vượt các cổng hạ tầng/nghiệm thu còn mở; SETUP.md, OPERATIONS.md, PRINTING.md và ACCEPTANCE.md hoàn chỉnh.
 
 ### Tiêu chí hoàn thành
 
-- [ ] Toàn bộ ma trận PLAN.md §9 đạt hoặc ngoại lệ được người dùng chấp nhận rõ; không tự bỏ qua lỗi mất/sai dữ liệu, lộ bí mật.
-- [ ] Không còn login mặc định, secret công khai hay API dữ liệu không bảo vệ; logout/đổi password hoạt động ở production.
-- [ ] Đã có nghiệm thu máy in thật, quy trình rollback và hướng dẫn vận hành; không nhầm việc build thành công với phát hành hoàn tất.
+- [ ] Ma trận phần mềm tự động đạt; ngoại lệ host HTTPS, thiết bị mobile thật và máy in/giấy thật chưa được người dùng nghiệm thu/chấp nhận.
+- [x] Production env từ chối username `admin`, placeholder/sai hash, HTTP origin và thiếu Google credential; API dữ liệu bảo vệ, logout hoạt động. Đổi password trên host thật còn chờ triển khai.
+- [ ] Đã có rollback/vận hành; chưa có nghiệm thu máy in thật và chưa phát hành production, nên không tuyên bố hoàn tất phát hành.
 
 Chỉ đánh dấu hoàn thành khi có bằng chứng kiểm tra; ghi rõ phần chưa thực hiện hoặc bị chặn.
 
@@ -37,7 +37,9 @@ Chỉ đánh dấu hoàn thành khi có bằng chứng kiểm tra; ghi rõ phầ
 
 Bàn giao; tính năng ngoài PLAN.md cần yêu cầu/phạm vi riêng.
 
-- Ghi file thay đổi, lệnh kiểm tra/kết quả, bằng chứng và vấn đề còn mở.
+- Bằng chứng: typecheck/lint/build đạt, 30 unit/integration test và 9 E2E đạt khi có Google live; production-env preflight đạt với cấu hình giả lập.
+- Tài liệu: `docs/web/SETUP.md`, `docs/web/OPERATIONS.md`, `docs/web/PRINTING.md`, `docs/web/ACCEPTANCE.md`. Cổng mở: host/domain HTTPS, quyền triển khai, mobile thật và máy in/giấy thật.
 - Chỉ đánh dấu hoàn thành khi các phần bắt buộc có bằng chứng; không xem mock/PDF là bằng chứng Google live/in giấy.
 - Không ghi secret hoặc dữ liệu nhạy cảm vào biên bản. Việc chia tài liệu không đồng nghĩa đã triển khai.
+
 

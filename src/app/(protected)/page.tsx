@@ -1,8 +1,6 @@
-import Link from "next/link";
-import { PackageSearch, Printer } from "lucide-react";
+import { PackageSearch } from "lucide-react";
 import { LookupForm } from "@/components/LookupForm";
 import { LogoutButton } from "@/components/LogoutButton";
-import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
@@ -14,7 +12,6 @@ export default function HomePage() {
             <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Phân đơn</p><h1 className="truncate text-lg font-semibold">Tra cứu lô và kiện</h1></div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {process.env.NODE_ENV === "development" ? <Button variant="outline" asChild className="min-h-11"><Link href="/print-spike"><Printer /> Thử in</Link></Button> : null}
             <LogoutButton />
           </div>
         </div>

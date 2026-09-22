@@ -1,0 +1,14 @@
+# Allowlist: never send .env, Google keys, logs or local build output to Docker.
+**
+!Dockerfile
+!.dockerignore
+!package.json
+!package-lock.json
+!next.config.ts
+!next-env.d.ts
+!tsconfig.json
+!postcss.config.mjs
+!src/
+!src/**
+!public/
+!public/**
