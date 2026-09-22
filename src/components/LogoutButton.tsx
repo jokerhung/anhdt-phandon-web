@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { clearLookupPreference } from "@/lib/lookup-preference";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export function LogoutButton() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } finally {
+      clearLookupPreference(localStorage);
       router.replace("/login");
       router.refresh();
     }

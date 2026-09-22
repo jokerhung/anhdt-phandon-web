@@ -26,10 +26,27 @@ test("chọn File → Sheet → Lô → Kiện và điều hướng preview", as
   await page.getByRole("combobox", { name: "Kiện" }).click();
   await page.getByPlaceholder("Tìm mã kiện…").fill("1");
   await page.getByRole("option").first().click();
+  await expect(page.getByTestId("package-summary")).toBeVisible();
+  await expect(page.getByText("Tổng SL", { exact: true })).toBeVisible();
+  await expect(page.getByText("Nhà phân phối đã được phân", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("total-quantity")).toHaveText(/^\d/);
   await expect(preview).toBeEnabled();
   await preview.click();
   await expect(page).toHaveURL(/\/preview\?.*fileId=.*sheetId=.*snapshotId=.*lot=.*package=/);
   await expect(page.getByRole("heading", { name: "Dữ liệu xem trước đã sẵn sàng" })).toBeVisible();
+});
+
+test("ghi nhớ file và sheet đã chọn sau khi reload trang", async ({ page }) => {
+  test.skip(!process.env.GOOGLE_APPLICATION_CREDENTIALS, "Cần Google credential read-only cho lookup E2E");
+  await login(page);
+  await selectFirst(page, "File Google Sheets");
+  const selectedFile = await page.getByRole("combobox", { name: "File Google Sheets" }).innerText();
+  await selectFirst(page, "Sheet / Tab");
+  const selectedSheet = await page.getByRole("combobox", { name: "Sheet / Tab" }).innerText();
+  await page.reload();
+  await expect(page.getByRole("combobox", { name: "File Google Sheets" })).toHaveText(selectedFile);
+  await expect(page.getByRole("combobox", { name: "Sheet / Tab" })).toHaveText(selectedSheet);
+  await expect(page.getByRole("combobox", { name: "Lô" })).toBeEnabled();
 });
 
 test("responsive không tràn ngang và trường phụ thuộc bị khóa", async ({ page }) => {

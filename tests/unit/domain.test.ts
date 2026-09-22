@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSlip, LabelIndex, naturalCompare, normalizeHeader, parseSheet } from "@/lib/domain";
+import { buildSlip, LabelIndex, naturalCompare, normalizeHeader, parseSheet, summarizePackageRows } from "@/lib/domain";
 import fixture from "../../../android/app/src/test/resources/synthetic_parser_fixture.json";
 
 const values = fixture.values as string[][];
@@ -36,6 +36,19 @@ describe("domain parity", () => {
       { sku: "10372", t: "81", khach: "DLK", soLuong: "17", ghiChu: "OK:50, 10 FPT" },
       { sku: "10372", t: "81", khach: "THC", soLuong: "3", ghiChu: "OK:30. 30 FPT" },
     ]);
+  });
+
+  it("tổng hợp tổng SL và nhà phân phối của kiện", () => {
+    const parsed = parseSheet(values, "080726");
+    if (!parsed.ok) throw new Error(parsed.message);
+    const summary = summarizePackageRows(LabelIndex.fromRows(parsed.rows).rows("201", "6"));
+    expect(summary).toEqual({
+      totalQuantity: 81,
+      allocatedQuantity: 20,
+      stockQuantity: 61,
+      distributors: [{ name: "DLK", quantity: 17 }, { name: "THC", quantity: 3 }],
+      rowCount: 1,
+    });
   });
 
   it("báo dòng Lô rỗng và không tạo slip chưa phân bổ", () => {

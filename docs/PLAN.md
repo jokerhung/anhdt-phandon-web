@@ -152,7 +152,7 @@ Mọi endpoint bảng này yêu cầu phiên admin. POST có kiểm tra CSRF/Ori
 - Snapshot bị loại hoặc không còn hợp lệ: trả `409 SNAPSHOT_EXPIRED`, yêu cầu tải lại danh sách; không âm thầm dựng phiếu từ bản mới cho lựa chọn cũ.
 - Khi refresh hoặc đổi nguồn, hủy preview cũ và xác thực lại lô/kiện. Trong MVP, nếu tải lại thất bại thì giữ thông tin lỗi và không cho tạo phiếu mới từ cache cũ chưa được xác nhận.
 - Dùng AbortController và request key để bỏ response đến muộn khi người dùng đổi file/tab/lô nhanh.
-- Không ghi dữ liệu nguồn vào localStorage. Có thể lưu ID lựa chọn không nhạy cảm, nhưng luôn kiểm tra lại với server; xóa trạng thái khi logout/401.
+- Không ghi dữ liệu nguồn hoặc snapshot vào localStorage. Có thể lưu `fileId` và `sheetId` đã chọn (ID không nhạy cảm), nhưng luôn kiểm tra lại với server sau đăng nhập/reload; xóa trạng thái khi logout/401.
 - Timeout, retry có giới hạn cho lỗi Google tạm thời/429/5xx với backoff; không retry vô hạn hoặc retry lỗi quyền truy cập.
 
 ### Quy tắc nghiệp vụ cần chuyển nguyên vẹn
