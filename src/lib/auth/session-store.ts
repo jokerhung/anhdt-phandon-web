@@ -57,6 +57,12 @@ export class SessionStore {
     if (token) this.sessions.delete(this.hash(token));
   }
 
+  timing(token: string | undefined): { createdAt: number; expiresAt: number } | null {
+    if (!this.validate(token)) return null;
+    const session = this.sessions.get(this.hash(token!))!;
+    return { createdAt: session.createdAt, expiresAt: session.expiresAt };
+  }
+
   clear(): void {
     this.sessions.clear();
   }

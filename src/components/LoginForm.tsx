@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { clearLookupPreference } from "@/lib/lookup-preference";
 
 export function LoginForm() {
   const router = useRouter();
@@ -64,6 +65,7 @@ export function LoginForm() {
         setError("Máy chủ trả về phản hồi đăng nhập không hợp lệ. Vui lòng tải lại trang; nếu vẫn lỗi, nhờ quản trị viên kiểm tra proxy/tunnel.");
         return;
       }
+      clearLookupPreference(localStorage);
       router.replace(result.redirectTo ?? "/");
       router.refresh();
     } catch (cause) {

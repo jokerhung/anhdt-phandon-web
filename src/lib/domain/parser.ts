@@ -14,6 +14,7 @@ function parseHeader(value: string): string {
     "item no": "sku",
     "q'ty": "sl",
     "q’ty": "sl",
+    "kho": "ton",
   };
   return aliases[normalized] ?? normalized;
 }

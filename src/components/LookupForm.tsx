@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, FileSpreadsheet, Loader2, Package, RefreshCw, RotateCcw, Users } from "lucide-react";
 import { SearchableSelect, type SelectOption } from "@/components/SearchableSelect";
@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { clearLookupPreference, readLookupPreference, saveLookupPreference } from "@/lib/lookup-preference";
+import { clearLookupPreference, saveLookupPreference } from "@/lib/lookup-preference";
+import { useSessionSheetRefresh } from "@/components/SessionSheetRefresh";
 
 type FileDto = { id: string; name: string; modifiedTime: string };
+type CatalogDto = { files: FileDto[]; fetchedAt: string; invalidSheets: number };
 type SheetDto = { sheetId: number; title: string };
 type PackageSummary = { lot: string; package: string; totalQuantity: number; allocatedQuantity: number; stockQuantity: number; distributors: Array<{ name: string; quantity: number }>; rowCount: number; snapshotId: string; fetchedAt: string };
 type ApiError = { error?: string; message?: string };
@@ -19,15 +21,18 @@ type ApiError = { error?: string; message?: string };
 type LoadingKey = "files" | "sheets" | "lots" | "packages" | "summary" | "refresh";
 const initialLoading: Record<LoadingKey, boolean> = { files: false, sheets: false, lots: false, packages: false, summary: false, refresh: false };
 
-export function LookupForm() {
+export function LookupForm({ initialFileId, initialSheetId }: { initialFileId?: string; initialSheetId?: number } = {}) {
   const router = useRouter();
+  const sessionRefresh = useSessionSheetRefresh();
   const controllers = useRef(new Map<LoadingKey, AbortController>());
   const requestIds = useRef(new Map<LoadingKey, number>());
   const selectionRevision = useRef(0);
   const refreshLock = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [invalidSheets, setInvalidSheets] = useState(0);
   const [files, setFiles] = useState<FileDto[]>([]); const [sheets, setSheets] = useState<SheetDto[]>([]); const [lots, setLots] = useState<string[]>([]); const [packages, setPackages] = useState<string[]>([]);
   const [fileId, setFileId] = useState(""); const [sheetId, setSheetId] = useState(""); const [lot, setLot] = useState(""); const [packageId, setPackageId] = useState("");
+  const sessionUpdating = sessionRefresh.busy && sessionRefresh.fileId === fileId && String(sessionRefresh.sheetId) === sheetId;
   const [snapshotId, setSnapshotId] = useState(""); const [fetchedAt, setFetchedAt] = useState(""); const [summary, setSummary] = useState<PackageSummary | null>(null); const [error, setError] = useState(""); const [loading, setLoading] = useState(initialLoading);
   const [open, setOpen] = useState({ file: false, sheet: false, lot: false, package: false });
 
@@ -61,34 +66,32 @@ export function LookupForm() {
     } finally { if (requestIds.current.get(key) === id) setBusy(key, false); }
   }, [router]);
 
-  const loadFiles = useCallback(async (force = false) => {
-    const preference = readLookupPreference(localStorage);
+  const loadFiles = useCallback(async (force = false, restoreSource = false) => {
     const revision = selectionRevision.current + 1;
     selectionRevision.current = revision;
-    const result = await request<{ files: FileDto[] }>("files", force ? "/api/files?refresh=1" : "/api/files");
+    const result = await request<CatalogDto>("files", force ? "/api/refresh" : "/api/files", force ? { method: "POST" } : undefined);
     if (!result || selectionRevision.current !== revision) return;
     setFileId(""); resetAfterFile();
     setFiles(result.files);
-    if (!preference) return;
-    if (!result.files.some((file) => file.id === preference.fileId)) { clearLookupPreference(localStorage); return; }
-    setFileId(preference.fileId);
-    const tabs = await request<{ sheets: SheetDto[] }>("sheets", `/api/sheets?fileId=${encodeURIComponent(preference.fileId)}${force ? "&refresh=1" : ""}`);
+    setFetchedAt(result.fetchedAt); setInvalidSheets(result.invalidSheets);
+    // Restore only on an explicit return URL from preview, not a normal login.
+    if (!restoreSource || !initialFileId || !result.files.some((file) => file.id === initialFileId)) return;
+    setFileId(initialFileId);
+    saveLookupPreference(localStorage, { fileId: initialFileId });
+    const tabs = await request<{ sheets: SheetDto[] }>("sheets", `/api/sheets?fileId=${encodeURIComponent(initialFileId)}`);
     if (!tabs || selectionRevision.current !== revision) return;
     setSheets(tabs.sheets);
-    if (preference.sheetId === undefined) return;
-    if (!tabs.sheets.some((sheet) => sheet.sheetId === preference.sheetId)) {
-      saveLookupPreference(localStorage, { fileId: preference.fileId }); return;
-    }
-    setSheetId(String(preference.sheetId));
-    const lotsResult = await request<{ lots: string[]; snapshotId: string; fetchedAt: string }>("lots", `/api/lots?fileId=${encodeURIComponent(preference.fileId)}&sheetId=${preference.sheetId}`);
-    if (lotsResult && selectionRevision.current === revision) {
-      setLots(lotsResult.lots); setSnapshotId(lotsResult.snapshotId); setFetchedAt(lotsResult.fetchedAt);
-    }
-  }, [request]);
+    if (initialSheetId === undefined || !tabs.sheets.some((sheet) => sheet.sheetId === initialSheetId)) return;
+    setSheetId(String(initialSheetId));
+    saveLookupPreference(localStorage, { fileId: initialFileId, sheetId: initialSheetId });
+    const lotsResult = await request<{ lots: string[]; snapshotId: string; fetchedAt: string }>("lots", `/api/lots?${new URLSearchParams({ fileId: initialFileId, sheetId: String(initialSheetId) })}`);
+    if (!lotsResult || selectionRevision.current !== revision) return;
+    setLots(lotsResult.lots); setSnapshotId(lotsResult.snapshotId); setFetchedAt(lotsResult.fetchedAt);
+  }, [request, initialFileId, initialSheetId]);
 
   useEffect(() => {
     const activeControllers = controllers.current;
-    const timer = window.setTimeout(() => void loadFiles(), 0);
+    const timer = window.setTimeout(() => void loadFiles(false, true), 0);
     return () => { window.clearTimeout(timer); activeControllers.forEach((controller) => controller.abort()); };
   }, [loadFiles]);
 
@@ -126,7 +129,7 @@ export function LookupForm() {
     const result = await request<PackageSummary>("summary", `/api/package-summary?fileId=${encodeURIComponent(fileId)}&sheetId=${encodeURIComponent(sheetId)}&snapshotId=${encodeURIComponent(snapshotId)}&lot=${encodeURIComponent(lot)}&package=${encodeURIComponent(next)}`);
     if (result && selectionRevision.current === revision) setSummary(result);
   }
-  async function refresh() {
+  async function refresh(sheetOnly = false, cacheOnly = false) {
     if (refreshLock.current) return;
     refreshLock.current = true; setRefreshing(true);
     setOpen({ file: false, sheet: false, lot: false, package: false });
@@ -135,8 +138,25 @@ export function LookupForm() {
     // Retain displayed data, but invalidate its print eligibility immediately.
     setSnapshotId("");
     try {
-      if (!fileId || !sheetId) { await loadFiles(true); return; }
-      const result = await request<{ lots: string[]; snapshotId: string; fetchedAt: string }>("refresh", "/api/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId, sheetId: Number(sheetId) }) });
+      if (!fileId) { await loadFiles(true); return; }
+      const catalog = await request<CatalogDto>("refresh", cacheOnly ? "/api/files" : sheetOnly ? "/api/refresh?scope=sheet" : "/api/refresh", cacheOnly ? undefined : sheetOnly
+        ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId, sheetId: Number(sheetId) }) }
+        : { method: "POST" });
+      if (!catalog || selectionRevision.current !== revision) return;
+      setFiles(catalog.files); setInvalidSheets(catalog.invalidSheets);
+      if (!catalog.files.some((file) => file.id === fileId)) {
+        setFileId(""); resetAfterFile(); clearLookupPreference(localStorage);
+        setFetchedAt(catalog.fetchedAt); return;
+      }
+      const tabs = await request<{ sheets: SheetDto[] }>("sheets", `/api/sheets?fileId=${encodeURIComponent(fileId)}`);
+      if (!tabs || selectionRevision.current !== revision) return;
+      setSheets(tabs.sheets);
+      if (!sheetId) { resetAfterSheet(); setFetchedAt(catalog.fetchedAt); return; }
+      if (!tabs.sheets.some((sheet) => String(sheet.sheetId) === sheetId)) {
+        setSheetId(""); resetAfterSheet(); saveLookupPreference(localStorage, { fileId });
+        setFetchedAt(catalog.fetchedAt); return;
+      }
+      const result = await request<{ lots: string[]; snapshotId: string; fetchedAt: string }>("lots", `/api/lots?${new URLSearchParams({ fileId, sheetId })}`);
       if (!result || selectionRevision.current !== revision) return;
       const nextLot = result.lots.includes(lot) ? lot : "";
       let nextPackages: string[] = [];
@@ -163,26 +183,36 @@ export function LookupForm() {
       refreshLock.current = false; setRefreshing(false);
     }
   }
+  const syncRefreshedSheet = useEffectEvent(() => {
+    if (sessionRefresh.fileId === fileId && String(sessionRefresh.sheetId) === sheetId && !refreshLock.current) void refresh(false, true);
+  });
+  useEffect(() => {
+    if (sessionRefresh.version > 0) syncRefreshedSheet();
+  }, [sessionRefresh.version]);
+
   function preview() {
-    if (refreshLock.current || !fileId || !sheetId || !snapshotId || !lot || !packageId || Object.values(loading).some(Boolean)) return;
+    if (sessionUpdating || refreshLock.current || !fileId || !sheetId || !snapshotId || !lot || !packageId || Object.values(loading).some(Boolean)) return;
     const query = new URLSearchParams({ fileId, sheetId, snapshotId, lot, package: packageId }); router.push(`/preview?${query.toString()}`);
   }
 
   const fileOptions: SelectOption[] = files.map((file) => ({ value: file.id, label: file.name, description: file.modifiedTime ? `Cập nhật: ${new Date(file.modifiedTime).toLocaleString("vi-VN")}` : undefined }));
   const sheetOptions = sheets.map((sheet) => ({ value: String(sheet.sheetId), label: sheet.title }));
   const lotOptions = lots.map((item) => ({ value: item, label: item })); const packageOptions = packages.map((item) => ({ value: item, label: item }));
-  const valid = Boolean(fileId && sheetId && snapshotId && lot && packageId && packages.includes(packageId)) && !refreshing && !Object.values(loading).some(Boolean);
+  const valid = Boolean(fileId && sheetId && snapshotId && lot && packageId && packages.includes(packageId)) && !refreshing && !sessionUpdating && !Object.values(loading).some(Boolean);
 
   return (
-    <fieldset className="min-w-0 space-y-4" disabled={refreshing} aria-busy={refreshing}>
+    <fieldset className="min-w-0 space-y-4" disabled={refreshing || sessionUpdating} aria-busy={refreshing || sessionUpdating}>
       <Card>
         <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1.5"><CardTitle className="flex items-center gap-2"><Package className="size-5 text-primary" /> Tra cứu kiện</CardTitle><CardDescription>Chọn lần lượt nguồn dữ liệu, tab, lô và kiện cần xem trước.</CardDescription></div>
           <div className="flex flex-wrap items-center gap-2"><Badge variant={fetchedAt ? "secondary" : "outline"}>{fetchedAt ? `Đồng bộ ${new Date(fetchedAt).toLocaleString("vi-VN")}` : "Chưa đồng bộ"}</Badge><Button type="button" variant="outline" className="min-h-11" onClick={() => void refresh()} disabled={loading.refresh || loading.files}><RefreshCw className={loading.refresh ? "animate-spin" : ""} /> Làm mới</Button></div>
         </CardHeader>
         <CardContent className="space-y-5">
+          {loading.files && !refreshing ? <p role="status" className="text-sm text-muted-foreground">Đang tải danh sách file… Danh sách tab và dữ liệu chỉ tải khi bạn chọn.</p> : null}
+          {invalidSheets > 0 ? <p className="text-sm text-muted-foreground">Có {invalidSheets} tab không đúng định dạng phân đơn; các tab hợp lệ vẫn được lưu trong cache.</p> : null}
+          <p className="text-xs text-muted-foreground">Sheet đang chọn tự cập nhật mỗi 15 phút kể từ khi đăng nhập, kể cả ở preview. Nút Làm mới vẫn cập nhật ngay. Cache mất khi server khởi động lại.</p>
           {refreshing ? <p role="status" className="text-sm text-muted-foreground">Đang cập nhật… Dữ liệu đang hiển thị là bản trước; tạm khóa xem trước/in.</p> : error && summary && !snapshotId ? <p role="status" className="text-sm text-destructive">Chưa cập nhật thành công. Dữ liệu bên dưới là bản cũ, không thể in; hãy thử làm mới lại.</p> : null}
-          {error ? <Alert variant="destructive"><AlertCircle /><AlertDescription>{error} <Button type="button" variant="link" className="h-auto p-0 align-baseline" onClick={() => void (fileId && sheetId ? refresh() : loadFiles())}>Thử lại</Button></AlertDescription></Alert> : null}
+          {error ? <Alert variant="destructive"><AlertCircle /><AlertDescription>{error} <Button type="button" variant="link" className="h-auto p-0 align-baseline" onClick={() => void refresh()}>Làm mới và thử lại</Button></AlertDescription></Alert> : null}
           {!loading.files && files.length === 0 && !error ? <Alert><FileSpreadsheet /><AlertDescription>Không có file Google Sheets nào trong phạm vi được cấp quyền.</AlertDescription></Alert> : null}
           <div className="grid gap-5 md:grid-cols-2">
             <div className="min-w-0 space-y-2"><Label htmlFor="file-select">File Google Sheets</Label><SearchableSelect id="file-select" value={fileId} options={fileOptions} placeholder="Chọn file Google Sheets" searchPlaceholder="Tìm file…" emptyText="Không tìm thấy file." loading={loading.files} disabled={files.length === 0} searchable open={open.file} onOpenChange={(value) => setOpen((current) => ({ ...current, file: value }))} onChange={(value) => void chooseFile(value)} /></div>

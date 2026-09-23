@@ -2,7 +2,10 @@ import { PackageSearch } from "lucide-react";
 import { LookupForm } from "@/components/LookupForm";
 import { LogoutButton } from "@/components/LogoutButton";
 
-export default function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const params = await searchParams;
+  const fileId = typeof params.fileId === "string" && /^[A-Za-z0-9_-]{1,256}$/.test(params.fileId) ? params.fileId : undefined;
+  const sheetId = typeof params.sheetId === "string" && /^\d+$/.test(params.sheetId) && Number.isSafeInteger(Number(params.sheetId)) ? Number(params.sheetId) : undefined;
   return (
     <main className="min-h-svh overflow-x-hidden bg-muted/30">
       <header className="border-b bg-background/95 backdrop-blur">
@@ -17,7 +20,7 @@ export default function HomePage() {
         </div>
       </header>
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
-        <LookupForm />
+        <LookupForm key={`${fileId ?? ""}:${sheetId ?? ""}`} initialFileId={fileId} initialSheetId={sheetId} />
       </div>
     </main>
   );

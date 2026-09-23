@@ -3,9 +3,10 @@ import { buildSlip, formatSlipDate, summarizePackageRows } from "@/lib/domain";
 import { DomainDataError } from "@/lib/server/api";
 import { getEnv } from "@/lib/server/env";
 import { getSnapshotCache } from "@/lib/server/snapshot-cache";
+import { getCatalogSnapshot } from "@/lib/server/catalog-cache";
 
 export async function getLots(fileId: string, sheetId: number) {
-  const snapshot = await getSnapshotCache().getOrLoad(fileId, sheetId);
+  const snapshot = await getCatalogSnapshot(fileId, sheetId);
   return { lots: snapshot.index.lots(), snapshotId: snapshot.id, fetchedAt: snapshot.fetchedAt };
 }
 export function getPackages(fileId: string, sheetId: number, snapshotId: string, lot: string) {

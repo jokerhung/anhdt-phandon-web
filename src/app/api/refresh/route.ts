@@ -1,8 +1,21 @@
 import type { NextRequest } from "next/server";
+import { apiError, jsonNoStore, fileIdSchema, sheetIdSchema } from "@/lib/server/api";
 import { z } from "zod";
-import { apiError, fileIdSchema, jsonNoStore, sheetIdSchema } from "@/lib/server/api";
 import { guardPost } from "@/lib/server/route-auth";
-import { getSnapshotCache } from "@/lib/server/snapshot-cache";
+import { getCatalog, refreshCatalogSheet } from "@/lib/server/catalog-cache";
 export const runtime = "nodejs";
-const bodySchema = z.object({ fileId: fileIdSchema, sheetId: sheetIdSchema });
-export async function POST(request: NextRequest) { const denied = await guardPost(request); if (denied) return denied; try { const body = bodySchema.parse(await request.json()); const snapshot = await getSnapshotCache().refresh(body.fileId, body.sheetId); return jsonNoStore({ lots: snapshot.index.lots(), snapshotId: snapshot.id, fetchedAt: snapshot.fetchedAt }); } catch (error) { return apiError(error); } }
+const sheetRefreshSchema = z.object({ fileId: fileIdSchema, sheetId: sheetIdSchema });
+export async function POST(request: NextRequest) {
+  const denied = await guardPost(request); if (denied) return denied;
+  try {
+    const scope = new URL(request.url).searchParams.get("scope");
+    let catalog;
+    if (scope === "sheet") {
+      const body = sheetRefreshSchema.parse(await request.json());
+      catalog = await refreshCatalogSheet(body.fileId, body.sheetId);
+    } else {
+      catalog = await getCatalog(true);
+    }
+    return jsonNoStore({ files: catalog.files, fetchedAt: catalog.fetchedAt, invalidSheets: catalog.errors.size });
+  } catch (error) { return apiError(error); }
+}

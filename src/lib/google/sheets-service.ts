@@ -35,9 +35,14 @@ export class SheetsService {
     const tabs = await this.listTabs(fileId, force);
     const tab = tabs.find((item) => item.sheetId === sheetId);
     if (!tab) throw mapGoogleError(Object.assign(new Error("sheet missing"), { code: 404 }));
+    return this.readTabValues(fileId, tab.title);
+  }
+
+  // Called after catalog preload has authorized the file and discovered tabs.
+  async readTabValues(fileId: string, title: string): Promise<{ title: string; rows: string[][] }> {
     try {
-      const response = await withGoogleRetry(() => this.sheets.spreadsheets.values.get({ spreadsheetId: fileId, range: quoteA1Title(tab.title), valueRenderOption: "FORMATTED_VALUE", majorDimension: "ROWS" }));
-      return { title: tab.title, rows: (response.data.values ?? []).map((row) => row.map((cell) => String(cell ?? ""))) };
+      const response = await withGoogleRetry(() => this.sheets.spreadsheets.values.get({ spreadsheetId: fileId, range: quoteA1Title(title), valueRenderOption: "FORMATTED_VALUE", majorDimension: "ROWS" }));
+      return { title, rows: (response.data.values ?? []).map((row) => row.map((cell) => String(cell ?? ""))) };
     } catch (error) { throw mapGoogleError(error); }
   }
 }

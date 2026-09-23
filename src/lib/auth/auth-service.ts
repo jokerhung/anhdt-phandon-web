@@ -28,9 +28,16 @@ async function initializeAuth(): Promise<AuthRuntime> {
   };
 }
 
-export function getAuthRuntime(): Promise<AuthRuntime> {
+export async function getAuthRuntime(): Promise<AuthRuntime> {
   globalThis.__phanDonAuthRuntime ??= initializeAuth();
-  return globalThis.__phanDonAuthRuntime;
+  const runtime = await globalThis.__phanDonAuthRuntime;
+  // Next dev preserves globalThis across module reloads. Existing stores can
+  // predate timing(), but already contain createdAt/expiresAt in each record.
+  // Add the compatible method without resetting sessions or the rate limiter.
+  if (typeof runtime.sessions.timing !== "function") {
+    runtime.sessions.timing = SessionStore.prototype.timing;
+  }
+  return runtime;
 }
 
 export async function authenticate(username: string, password: string): Promise<boolean> {
@@ -42,6 +49,10 @@ export async function authenticate(username: string, password: string): Promise<
 export async function hasAdminSession(): Promise<boolean> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   return (await getAuthRuntime()).sessions.validate(token);
+}
+
+export async function getSessionTiming() {
+  return (await getAuthRuntime()).sessions.timing((await cookies()).get(SESSION_COOKIE)?.value);
 }
 
 export async function requireAdminPage(nextPath = "/"): Promise<void> {

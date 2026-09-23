@@ -18,7 +18,7 @@ export class SnapshotCache {
   private readonly inflight = new Map<string, Promise<Snapshot>>();
   private readonly ttlMs: number; private readonly retentionMs: number; private readonly maxSources: number; private readonly maxSnapshots: number; private readonly now: () => number;
 
-  constructor(private readonly sheets = new SheetsService(), options: SnapshotCacheOptions = {}) {
+  constructor(private readonly sheets: Pick<SheetsService, "readValues"> = new SheetsService(), options: SnapshotCacheOptions = {}) {
     this.ttlMs = (options.ttlSeconds ?? getEnv().SHEETS_CACHE_TTL_SECONDS) * 1000;
     this.retentionMs = (options.retentionSeconds ?? Math.max(300, (options.ttlSeconds ?? getEnv().SHEETS_CACHE_TTL_SECONDS) * 5)) * 1000;
     this.maxSources = options.maxSources ?? 20; this.maxSnapshots = options.maxSnapshots ?? 60; this.now = options.now ?? Date.now;
@@ -53,6 +53,10 @@ export class SnapshotCache {
   }
 
   private publish(key: string, snapshot: Snapshot) {
+    // The non-expiring catalog retains only the latest version of each sheet.
+    // Do not accumulate a new permanent snapshot every 15 minutes.
+    const previous = this.current.get(key);
+    if (previous && this.retentionMs === Infinity) this.snapshots.delete(previous.id);
     if (!this.current.has(key) && this.current.size >= this.maxSources) this.current.delete(this.current.keys().next().value as string);
     this.current.delete(key); this.current.set(key, snapshot);
     this.snapshots.set(snapshot.id, { snapshot, expiresAt: this.now() + this.retentionMs });
@@ -64,3 +68,4 @@ export class SnapshotCache {
 
 declare global { var __phanDonSnapshotCache: SnapshotCache | undefined }
 export function getSnapshotCache(): SnapshotCache { globalThis.__phanDonSnapshotCache ??= new SnapshotCache(); return globalThis.__phanDonSnapshotCache; }
+export function publishSnapshotCache(cache: SnapshotCache): void { globalThis.__phanDonSnapshotCache = cache; }
