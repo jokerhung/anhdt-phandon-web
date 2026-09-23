@@ -84,7 +84,7 @@
   border: 0;
   outline: 1px solid #bbb;
   font-family: Arial, "Noto Sans", sans-serif;
-  font-size: 7.5pt;
+  font-size: 15pt;
 }
 .slipTitle { display: flex; justify-content: space-between; gap: 2mm; margin-bottom: 4mm; font-size: inherit; line-height: 1.5; }
 .slipTitle > div { min-width: 0; overflow-wrap: anywhere; }
@@ -98,6 +98,7 @@
 /* Uniform fit: A7 artwork fills A4's height without changing table wrapping.
    Keep this outside print media so the preview uses the exact same scale. */
 .printProfile-a4 .slip { zoom: 2; }
+.printProfile-a6 .slip { width: 150mm; height: 100mm; min-height: 100mm; }
 
 @page { size: 105mm 74mm; margin: 0; }
 @media print {
@@ -111,6 +112,10 @@
   .printProfile-a7 .slip { margin: 0; }
   .printProfile-a4, .printProfile-a4 .slip { page: a4Profile; }
   .printProfile-a4 .slip { margin: 0; }
+  .printProfile-a6, .printProfile-a6 .slip { page: a6Profile; }
+  .printProfile-a6 .slip { margin: 0; }
 }
 @page a7Profile { size: 105mm 74mm; margin: 0; }
 @page a4Profile { size: A4 landscape; margin: 0; }
+/* Custom 150 × 100 mm stock, not ISO A6 (148 × 105 mm). */
+@page a6Profile { size: 150mm 100mm; margin: 0; }

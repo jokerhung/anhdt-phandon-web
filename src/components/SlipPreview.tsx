@@ -1,4 +1,5 @@
 import type { Slip } from "@/lib/domain";
+import { toIntOrZero } from "@/lib/domain/text";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -34,16 +35,18 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
         <colgroup>
           <col style={{ width: "14%" }} /><col style={{ width: "14%" }} />
           {customers.map((customer) => <col key={customer} style={{ width: `${43 / customers.length}%` }} />)}
-          <col style={{ width: "29%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "17%" }} />
         </colgroup>
         <thead>
-          <tr><th rowSpan={2} scope="col">SKU</th><th rowSpan={2} scope="col">TỔNG</th><th colSpan={Math.max(customers.length, 1)} scope="colgroup">KHÁCH</th><th rowSpan={2} scope="col">GHI CHÚ</th></tr>
+          <tr><th rowSpan={2} scope="col">SKU</th><th rowSpan={2} scope="col">TỔNG</th><th colSpan={Math.max(customers.length, 1)} scope="colgroup">KHÁCH</th><th rowSpan={2} scope="col">TỒN</th><th rowSpan={2} scope="col">GHI CHÚ</th></tr>
           <tr>{customers.length ? customers.map((customer) => <th className="slipCustomer" key={customer} scope="col"><strong className="slipValue">{customer}</strong></th>) : <th scope="col">—</th>}</tr>
         </thead>
         <tbody>{rows.map((row, index) => (
           <tr key={`${row.sku}-${index}`}>
             <td><strong className="slipValue">{row.sku}</strong></td><td><strong className="slipValue">{row.total}</strong></td>
             {customers.map((customer) => <td key={customer}>{row.quantities.get(customer) ? <strong className="slipValue">{row.quantities.get(customer)}</strong> : ""}</td>)}
+            <td><strong className="slipValue">{toIntOrZero(row.total) - [...row.quantities.values()].reduce((sum, quantity) => sum + toIntOrZero(quantity), 0)}</strong></td>
             <td className="slipNotes">{row.notes.join("\n")}</td>
           </tr>
         ))}</tbody>

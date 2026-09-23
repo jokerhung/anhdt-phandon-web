@@ -51,7 +51,7 @@ export function PrintButton({ targetId, enabled = true }: Props) {
         <span className="sm:hidden">{checking ? "Đang kiểm tra…" : "In phiếu"}</span>
         <span className="hidden sm:inline">{checking ? "Đang kiểm tra bố cục…" : "In / Ctrl+P"}</span>
       </Button>
-      {overflow ? <Alert variant="destructive" className="max-w-lg"><AlertTriangle /><AlertDescription>Nội dung vượt quá một trang phiếu. Hãy điều chỉnh dữ liệu trước khi in; đổi khổ giấy chỉ phóng theo tỷ lệ, không tăng số dòng chứa được.</AlertDescription></Alert> : null}
+      {overflow ? <Alert variant="destructive" className="max-w-lg"><AlertTriangle /><AlertDescription>Nội dung vượt quá khổ giấy đang chọn. Hãy chọn khổ giấy phù hợp hoặc điều chỉnh dữ liệu trước khi in.</AlertDescription></Alert> : null}
     </div>
   );
 }

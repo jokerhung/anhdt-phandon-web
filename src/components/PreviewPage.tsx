@@ -13,12 +13,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import type { Slip } from "@/lib/domain";
 import { clearLookupPreference } from "@/lib/lookup-preference";
 import { cn } from "@/lib/utils";
+import { PRINT_PROFILES, PRINT_PROFILE_LABELS, type PrintProfile } from "@/lib/print-profiles";
 
 interface PreviewQuery { fileId: string; sheetId: string; snapshotId: string; lot: string; packageId: string }
 type SlipResponse = { printable: true; slip: Slip; source: { sheetTitle: string }; snapshotId: string; fetchedAt: string } | { printable: false; reason: "UNALLOCATED"; message: string; source: { sheetTitle: string }; snapshotId: string; fetchedAt: string };
 type ErrorBody = { error?: string; message?: string };
 
-export function PreviewPage({ query, profile }: { query: PreviewQuery; profile: "a7" | "a4" }) {
+export function PreviewPage({ query, profile }: { query: PreviewQuery; profile: PrintProfile }) {
   const router = useRouter();
   const [result, setResult] = useState<SlipResponse | null>(null);
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
@@ -42,7 +43,7 @@ export function PreviewPage({ query, profile }: { query: PreviewQuery; profile: 
     void load(); return () => controller.abort();
   }, [query.fileId, query.lot, query.packageId, query.sheetId, query.snapshotId, router]);
 
-  const profileHref = (nextProfile: "a7" | "a4") => { const params = new URLSearchParams({ fileId: query.fileId, sheetId: query.sheetId, snapshotId: query.snapshotId, lot: query.lot, package: query.packageId, profile: nextProfile }); return `/preview?${params}`; };
+  const profileHref = (nextProfile: PrintProfile) => { const params = new URLSearchParams({ fileId: query.fileId, sheetId: query.sheetId, snapshotId: query.snapshotId, lot: query.lot, package: query.packageId, profile: nextProfile }); return `/preview?${params}`; };
   return (
     <main className={cn("previewPage min-h-svh bg-muted/40 px-4 py-6 sm:px-6 sm:py-10", `printProfile-${profile}`)}>
       <div className="noPrint mx-auto mb-6 w-full max-w-5xl space-y-4">
@@ -53,7 +54,7 @@ export function PreviewPage({ query, profile }: { query: PreviewQuery; profile: 
             {result?.printable ? <PrintButton targetId="print-slip" /> : null}
           </CardHeader>
           <CardContent className="space-y-4 px-4 sm:px-6">
-            <nav className="grid gap-3 sm:grid-cols-2" aria-label="Chọn profile in">{(["a7", "a4"] as const).map((item) => <Button key={item} asChild variant={profile === item ? "default" : "outline"} className="h-auto justify-start py-3"><Link aria-current={profile === item ? "page" : undefined} href={profileHref(item)}>{profile === item ? <Check /> : <Ruler />}<span className="text-left"><span className="block font-semibold">Profile {item.toUpperCase()}</span><span className={cn("block text-xs", profile === item ? "text-primary-foreground/75" : "text-muted-foreground")}>{item === "a7" ? "Trang 74 × 105 mm" : "Phóng theo tỷ lệ vừa trang A4"}</span></span></Link></Button>)}</nav>
+            <nav className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Chọn profile in">{PRINT_PROFILES.map((item) => <Button key={item} asChild variant={profile === item ? "default" : "outline"} className="h-auto justify-start whitespace-normal py-3"><Link aria-current={profile === item ? "page" : undefined} href={profileHref(item)}>{profile === item ? <Check /> : <Ruler />}<span className="text-left"><span className="block font-semibold">Profile {item.toUpperCase()}</span><span className={cn("block text-xs", profile === item ? "text-primary-foreground/75" : "text-muted-foreground")}>{PRINT_PROFILE_LABELS[item]}</span></span></Link></Button>)}</nav>
             <p className="text-sm text-muted-foreground">Có thể dùng nút In hoặc Ctrl+P. Trình duyệt không xác nhận chắc chắn giấy đã in thành công.</p>
           </CardContent>
         </Card>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PreviewPage } from "@/components/PreviewPage";
+import { parsePrintProfile } from "@/lib/print-profiles";
 import { fileIdSchema, identifierSchema, sheetIdSchema, snapshotIdSchema } from "@/lib/server/api";
 
 export const runtime = "nodejs";
@@ -20,6 +21,6 @@ export default async function PreviewRoute({ searchParams }: { searchParams: Pro
   if (!parsed.fileId.success || !parsed.sheetId.success || !parsed.snapshotId.success || !parsed.lot.success || !parsed.packageId.success) {
     return <main className="grid min-h-svh place-items-center bg-muted/30 p-4"><div className="max-w-lg rounded-xl border bg-background p-6 text-center shadow-sm"><h1 className="text-xl font-semibold">Thông tin xem trước không hợp lệ</h1><p className="mt-2 text-sm text-muted-foreground">URL thiếu hoặc chứa lựa chọn không hợp lệ. Vui lòng quay lại trang tra cứu.</p><Link className="mt-4 inline-flex min-h-11 items-center text-primary underline" href="/">Quay lại tra cứu</Link></div></main>;
   }
-  const profile = one(params.profile) === "a4" ? "a4" : "a7";
+  const profile = parsePrintProfile(one(params.profile));
   return <PreviewPage profile={profile} query={{ fileId: parsed.fileId.data, sheetId: String(parsed.sheetId.data), snapshotId: parsed.snapshotId.data, lot: parsed.lot.data, packageId: parsed.packageId.data }} />;
 }

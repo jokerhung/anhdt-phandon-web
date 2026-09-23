@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdminPage } from "@/lib/auth/auth-service";
 import { cn } from "@/lib/utils";
+import { PRINT_PROFILES, PRINT_PROFILE_LABELS, parsePrintProfile } from "@/lib/print-profiles";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ const prototypeSlip: Slip = {
 
 export default async function PrintSpikePage({ searchParams }: { searchParams: Promise<{ profile?: string }> }) {
   if (process.env.NODE_ENV !== "development") notFound();
-  const profile = (await searchParams).profile === "a4" ? "a4" : "a7";
+  const profile = parsePrintProfile((await searchParams).profile);
   await requireAdminPage(`/print-spike?profile=${profile}`);
 
   return (
@@ -42,19 +43,19 @@ export default async function PrintSpikePage({ searchParams }: { searchParams: P
                 <Badge variant="outline"><Ruler className="mr-1 size-3.5" /> Scale 100%</Badge>
               </div>
               <CardTitle className="text-2xl">Thử in phiếu {profile.toUpperCase()}</CardTitle>
-              <CardDescription>{profile === "a7" ? "A7 dọc 74 × 105 mm." : "Phiếu phóng theo tỷ lệ vừa trang A4, giống preview."} Chọn lề None và tắt header/footer. Dùng Fit to page nếu máy in cần co vào vùng in được.</CardDescription>
+              <CardDescription>{PRINT_PROFILE_LABELS[profile]}. Chọn lề None và tắt header/footer. Dùng Fit to page nếu máy in cần co vào vùng in được.</CardDescription>
             </div>
             <PrintButton targetId="prototype-slip" />
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
-            <nav className="grid gap-3 sm:grid-cols-2" aria-label="Chọn profile in">
-              {(["a7", "a4"] as const).map((item) => {
+            <nav className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Chọn profile in">
+              {PRINT_PROFILES.map((item) => {
                 const selected = profile === item;
                 return (
                   <Button key={item} asChild variant={selected ? "default" : "outline"} className="h-auto min-w-0 justify-start whitespace-normal px-3 py-3 sm:px-4">
                     <Link aria-current={selected ? "page" : undefined} href={`/print-spike?profile=${item}`}>
                       {selected ? <Check /> : <Ruler />}
-                      <span className="text-left"><span className="block font-semibold">Profile {item.toUpperCase()}</span><span className={cn("block text-xs", selected ? "text-primary-foreground/75" : "text-muted-foreground")}>{item === "a7" ? "Trang 74 × 105 mm" : "Phóng theo tỷ lệ vừa trang A4"}</span></span>
+                      <span className="text-left"><span className="block font-semibold">Profile {item.toUpperCase()}</span><span className={cn("block text-xs", selected ? "text-primary-foreground/75" : "text-muted-foreground")}>{PRINT_PROFILE_LABELS[item]}</span></span>
                     </Link>
                   </Button>
                 );

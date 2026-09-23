@@ -3,13 +3,19 @@
 ## Yêu cầu
 
 - Ưu tiên Chrome hoặc Edge mới trên máy tính đã cài driver máy in.
-- Profile mặc định là **A7 ngang 105 × 74 mm**. Profile **A4 ngang** phóng toàn bộ phiếu theo cùng tỷ lệ, vừa trang 297 × 210 mm; không thay đổi cách xuống dòng. Preview và bản in dùng chung tỷ lệ này.
+- Profile mặc định là **A6 ngang tùy chỉnh 150 × 100 mm**. Vẫn có thể chọn **A7 ngang 105 × 74 mm** hoặc **A4 ngang 297 × 210 mm**. Preview và bản in dùng chung profile đã chọn.
 - Web không tự chọn máy in và không thể ép mọi driver tuân thủ khổ giấy.
 
 ## Cách in
 
+### A6 ngang tùy chỉnh 150 × 100 mm
+
+Chọn **Profile A6** trong preview. Khổ này dùng đúng 150 mm chiều ngang × 100 mm chiều cao (không phải ISO A6 148 × 105 mm). Preview và Ctrl+P dùng cùng kích thước, giữ chữ đậm và cỡ chữ hiện có; bảng giãn theo chiều ngang của giấy.
+
+Trong driver máy in, tạo/chọn giấy Custom **150 × 100 mm**, lề None, tỷ lệ 100% và tắt Headers and footers. Không chọn preset A6 tiêu chuẩn vì kích thước khác. Nếu driver hiển thị 100 × 150 mm, chọn hướng Landscape. Kiểm tra bản in thử trước khi in hàng loạt.
+
 1. Tại trang xem trước, kiểm tra Lô, Kiện, SKU, khách, số lượng, ghi chú, ngày, Tổng SKU và Tồn.
-2. Chọn profile A7 hoặc A4.
+2. Chọn profile A7, A6 (150 × 100 mm) hoặc A4.
 3. Bấm **In / Ctrl+P** hoặc nhấn `Ctrl+P`.
 4. Trong hộp thoại in:
    - Chọn đúng máy in và khổ giấy tương ứng.
