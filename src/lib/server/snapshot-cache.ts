@@ -43,7 +43,7 @@ export class SnapshotCache {
     if (pending) return pending;
     const promise = (async () => {
       if (!force) { const existing = this.current.get(key); if (existing && this.now() - Date.parse(existing.fetchedAt) <= this.ttlMs) return existing; }
-      const data = await this.sheets.readValues(fileId, sheetId);
+      const data = await this.sheets.readValues(fileId, sheetId, force);
       const parsed = parseSheet(data.rows, data.title);
       if (!parsed.ok) throw new DomainDataError("SHEET_FORMAT", parsed.message);
       const snapshot: Snapshot = { id: randomUUID(), fileId, sheetId, title: data.title, fetchedAt: new Date(this.now()).toISOString(), rows: parsed.rows, index: LabelIndex.fromRows(parsed.rows) };

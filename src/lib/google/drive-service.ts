@@ -4,6 +4,7 @@ import { getGoogleClients } from "@/lib/google/client";
 import { mapGoogleError } from "@/lib/google/errors";
 import { withGoogleRetry } from "@/lib/google/retry";
 import { getEnv } from "@/lib/server/env";
+import { metadataCache } from "@/lib/google/metadata-cache";
 
 export interface SpreadsheetFile { id: string; name: string; modifiedTime: string }
 export interface DriveLike { files: { list(params: drive_v3.Params$Resource$Files$List): Promise<{ data: drive_v3.Schema$FileList }>; get(params: drive_v3.Params$Resource$Files$Get): Promise<{ data: drive_v3.Schema$File }> } }
@@ -11,7 +12,12 @@ export interface DriveLike { files: { list(params: drive_v3.Params$Resource$File
 export class DriveService {
   constructor(private readonly drive: DriveLike = getGoogleClients().drive) {}
 
-  async listSpreadsheets(): Promise<SpreadsheetFile[]> {
+  async listSpreadsheets(force = false): Promise<SpreadsheetFile[]> {
+    const folderId = getEnv().GOOGLE_DRIVE_FOLDER_ID?.trim() ?? "";
+    return metadataCache(this.drive).get(`files:${folderId}`, () => this.fetchSpreadsheets(), force);
+  }
+
+  private async fetchSpreadsheets(): Promise<SpreadsheetFile[]> {
     const folderId = getEnv().GOOGLE_DRIVE_FOLDER_ID?.trim();
     const query = "mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false" + (folderId ? ` and '${folderId.replaceAll("'", "\\'")}' in parents` : "");
     const files: SpreadsheetFile[] = [];

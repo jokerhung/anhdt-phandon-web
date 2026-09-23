@@ -15,7 +15,7 @@ export function SearchableSelect({ id, value, options, placeholder, searchPlaceh
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <Button id={id} type="button" variant="outline" role="combobox" aria-expanded={open} disabled={disabled || loading} className="min-h-11 w-full justify-between bg-background px-3 text-left text-base font-normal text-foreground sm:text-sm">
-          <span className="min-w-0 truncate">{loading ? "Đang tải…" : selected?.label ?? placeholder}</span>
+          <span className="min-w-0 truncate">{selected?.label ?? (loading ? "Đang tải…" : placeholder)}</span>
           {loading ? <Loader2 className="animate-spin opacity-60" /> : <ChevronsUpDown className="opacity-50" />}
         </Button>
       </PopoverTrigger>

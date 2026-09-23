@@ -24,6 +24,8 @@ export function LookupForm() {
   const controllers = useRef(new Map<LoadingKey, AbortController>());
   const requestIds = useRef(new Map<LoadingKey, number>());
   const selectionRevision = useRef(0);
+  const refreshLock = useRef(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [files, setFiles] = useState<FileDto[]>([]); const [sheets, setSheets] = useState<SheetDto[]>([]); const [lots, setLots] = useState<string[]>([]); const [packages, setPackages] = useState<string[]>([]);
   const [fileId, setFileId] = useState(""); const [sheetId, setSheetId] = useState(""); const [lot, setLot] = useState(""); const [packageId, setPackageId] = useState("");
   const [snapshotId, setSnapshotId] = useState(""); const [fetchedAt, setFetchedAt] = useState(""); const [summary, setSummary] = useState<PackageSummary | null>(null); const [error, setError] = useState(""); const [loading, setLoading] = useState(initialLoading);
@@ -59,18 +61,18 @@ export function LookupForm() {
     } finally { if (requestIds.current.get(key) === id) setBusy(key, false); }
   }, [router]);
 
-  const loadFiles = useCallback(async () => {
+  const loadFiles = useCallback(async (force = false) => {
     const preference = readLookupPreference(localStorage);
     const revision = selectionRevision.current + 1;
     selectionRevision.current = revision;
-    setFiles([]); resetAfterFile();
-    const result = await request<{ files: FileDto[] }>("files", "/api/files");
+    const result = await request<{ files: FileDto[] }>("files", force ? "/api/files?refresh=1" : "/api/files");
     if (!result || selectionRevision.current !== revision) return;
+    setFileId(""); resetAfterFile();
     setFiles(result.files);
     if (!preference) return;
     if (!result.files.some((file) => file.id === preference.fileId)) { clearLookupPreference(localStorage); return; }
     setFileId(preference.fileId);
-    const tabs = await request<{ sheets: SheetDto[] }>("sheets", `/api/sheets?fileId=${encodeURIComponent(preference.fileId)}`);
+    const tabs = await request<{ sheets: SheetDto[] }>("sheets", `/api/sheets?fileId=${encodeURIComponent(preference.fileId)}${force ? "&refresh=1" : ""}`);
     if (!tabs || selectionRevision.current !== revision) return;
     setSheets(tabs.sheets);
     if (preference.sheetId === undefined) return;
@@ -91,7 +93,7 @@ export function LookupForm() {
   }, [loadFiles]);
 
   async function chooseFile(next: string) {
-    if (next === fileId) return;
+    if (refreshLock.current || next === fileId) return;
     invalidateRequests(["sheets", "lots", "packages", "summary", "refresh"]);
     const revision = selectionRevision.current;
     setFileId(next); resetAfterFile();
@@ -100,7 +102,7 @@ export function LookupForm() {
     if (result && selectionRevision.current === revision) setSheets(result.sheets);
   }
   async function chooseSheet(next: string) {
-    if (next === sheetId) return;
+    if (refreshLock.current || next === sheetId) return;
     invalidateRequests(["lots", "packages", "summary", "refresh"]);
     const revision = selectionRevision.current;
     setSheetId(next); resetAfterSheet();
@@ -109,7 +111,7 @@ export function LookupForm() {
     if (result && selectionRevision.current === revision) { setLots(result.lots); setSnapshotId(result.snapshotId); setFetchedAt(result.fetchedAt); }
   }
   async function chooseLot(next: string) {
-    if (next === lot) return;
+    if (refreshLock.current || next === lot) return;
     invalidateRequests(["packages", "summary"]);
     const revision = selectionRevision.current;
     setLot(next); resetAfterLot();
@@ -117,7 +119,7 @@ export function LookupForm() {
     if (result && selectionRevision.current === revision) setPackages(result.packages);
   }
   async function choosePackage(next: string) {
-    if (next === packageId) return;
+    if (refreshLock.current || next === packageId) return;
     invalidateRequests(["summary"]);
     const revision = selectionRevision.current;
     setPackageId(next); setSummary(null);
@@ -125,30 +127,61 @@ export function LookupForm() {
     if (result && selectionRevision.current === revision) setSummary(result);
   }
   async function refresh() {
-    if (!fileId || !sheetId) { await loadFiles(); return; }
-    const selectedLot = lot; resetAfterSheet();
-    const result = await request<{ lots: string[]; snapshotId: string; fetchedAt: string }>("refresh", "/api/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId, sheetId: Number(sheetId) }) });
-    if (!result) return; setLots(result.lots); setSnapshotId(result.snapshotId); setFetchedAt(result.fetchedAt); saveLookupPreference(localStorage, { fileId, sheetId: Number(sheetId) });
-    if (selectedLot && result.lots.includes(selectedLot)) { setLot(selectedLot); const packageResult = await request<{ packages: string[] }>("packages", `/api/packages?fileId=${encodeURIComponent(fileId)}&sheetId=${encodeURIComponent(sheetId)}&snapshotId=${encodeURIComponent(result.snapshotId)}&lot=${encodeURIComponent(selectedLot)}`); if (packageResult) setPackages(packageResult.packages); }
+    if (refreshLock.current) return;
+    refreshLock.current = true; setRefreshing(true);
+    setOpen({ file: false, sheet: false, lot: false, package: false });
+    invalidateRequests(["files", "sheets", "lots", "packages", "summary", "refresh"]);
+    const revision = selectionRevision.current;
+    // Retain displayed data, but invalidate its print eligibility immediately.
+    setSnapshotId("");
+    try {
+      if (!fileId || !sheetId) { await loadFiles(true); return; }
+      const result = await request<{ lots: string[]; snapshotId: string; fetchedAt: string }>("refresh", "/api/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId, sheetId: Number(sheetId) }) });
+      if (!result || selectionRevision.current !== revision) return;
+      const nextLot = result.lots.includes(lot) ? lot : "";
+      let nextPackages: string[] = [];
+      let nextPackage = "";
+      let nextSummary: PackageSummary | null = null;
+      if (nextLot) {
+        const params = new URLSearchParams({ fileId, sheetId, snapshotId: result.snapshotId, lot: nextLot });
+        const packageResult = await request<{ packages: string[] }>("packages", `/api/packages?${params}`);
+        if (!packageResult || selectionRevision.current !== revision) return;
+        nextPackages = packageResult.packages;
+        nextPackage = nextPackages.includes(packageId) ? packageId : "";
+        if (nextPackage) {
+          params.set("package", nextPackage);
+          nextSummary = await request<PackageSummary>("summary", `/api/package-summary?${params}`);
+          if (!nextSummary || selectionRevision.current !== revision) return;
+        }
+      }
+      // Publish the new snapshot and dependent UI together, never mix versions.
+      setLots(result.lots); setLot(nextLot); setPackages(nextPackages);
+      setPackageId(nextPackage); setSummary(nextSummary);
+      setSnapshotId(result.snapshotId); setFetchedAt(result.fetchedAt);
+      saveLookupPreference(localStorage, { fileId, sheetId: Number(sheetId) });
+    } finally {
+      refreshLock.current = false; setRefreshing(false);
+    }
   }
   function preview() {
-    if (!fileId || !sheetId || !snapshotId || !lot || !packageId || Object.values(loading).some(Boolean)) return;
+    if (refreshLock.current || !fileId || !sheetId || !snapshotId || !lot || !packageId || Object.values(loading).some(Boolean)) return;
     const query = new URLSearchParams({ fileId, sheetId, snapshotId, lot, package: packageId }); router.push(`/preview?${query.toString()}`);
   }
 
   const fileOptions: SelectOption[] = files.map((file) => ({ value: file.id, label: file.name, description: file.modifiedTime ? `Cập nhật: ${new Date(file.modifiedTime).toLocaleString("vi-VN")}` : undefined }));
   const sheetOptions = sheets.map((sheet) => ({ value: String(sheet.sheetId), label: sheet.title }));
   const lotOptions = lots.map((item) => ({ value: item, label: item })); const packageOptions = packages.map((item) => ({ value: item, label: item }));
-  const valid = Boolean(fileId && sheetId && snapshotId && lot && packageId && packages.includes(packageId)) && !Object.values(loading).some(Boolean);
+  const valid = Boolean(fileId && sheetId && snapshotId && lot && packageId && packages.includes(packageId)) && !refreshing && !Object.values(loading).some(Boolean);
 
   return (
-    <div className="space-y-4">
+    <fieldset className="min-w-0 space-y-4" disabled={refreshing} aria-busy={refreshing}>
       <Card>
         <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1.5"><CardTitle className="flex items-center gap-2"><Package className="size-5 text-primary" /> Tra cứu kiện</CardTitle><CardDescription>Chọn lần lượt nguồn dữ liệu, tab, lô và kiện cần xem trước.</CardDescription></div>
           <div className="flex flex-wrap items-center gap-2"><Badge variant={fetchedAt ? "secondary" : "outline"}>{fetchedAt ? `Đồng bộ ${new Date(fetchedAt).toLocaleString("vi-VN")}` : "Chưa đồng bộ"}</Badge><Button type="button" variant="outline" className="min-h-11" onClick={() => void refresh()} disabled={loading.refresh || loading.files}><RefreshCw className={loading.refresh ? "animate-spin" : ""} /> Làm mới</Button></div>
         </CardHeader>
         <CardContent className="space-y-5">
+          {refreshing ? <p role="status" className="text-sm text-muted-foreground">Đang cập nhật… Dữ liệu đang hiển thị là bản trước; tạm khóa xem trước/in.</p> : error && summary && !snapshotId ? <p role="status" className="text-sm text-destructive">Chưa cập nhật thành công. Dữ liệu bên dưới là bản cũ, không thể in; hãy thử làm mới lại.</p> : null}
           {error ? <Alert variant="destructive"><AlertCircle /><AlertDescription>{error} <Button type="button" variant="link" className="h-auto p-0 align-baseline" onClick={() => void (fileId && sheetId ? refresh() : loadFiles())}>Thử lại</Button></AlertDescription></Alert> : null}
           {!loading.files && files.length === 0 && !error ? <Alert><FileSpreadsheet /><AlertDescription>Không có file Google Sheets nào trong phạm vi được cấp quyền.</AlertDescription></Alert> : null}
           <div className="grid gap-5 md:grid-cols-2">
@@ -157,7 +190,7 @@ export function LookupForm() {
             <div className="min-w-0 space-y-2"><Label htmlFor="lot-select">Lô</Label><SearchableSelect id="lot-select" value={lot} options={lotOptions} placeholder="Chọn lô" loading={loading.lots || loading.refresh} disabled={!sheetId || !snapshotId || lots.length === 0} searchable={lots.length > 8} open={open.lot} onOpenChange={(value) => setOpen((current) => ({ ...current, lot: value }))} onChange={(value) => void chooseLot(value)} /></div>
             <div className="min-w-0 space-y-2"><Label htmlFor="package-select">Kiện</Label><SearchableSelect id="package-select" value={packageId} options={packageOptions} placeholder="Chọn kiện" searchPlaceholder="Tìm mã kiện…" emptyText="Không có kiện phù hợp." loading={loading.packages} disabled={!lot || packages.length === 0} searchable open={open.package} onOpenChange={(value) => setOpen((current) => ({ ...current, package: value }))} onChange={(value) => void choosePackage(value)} /></div>
           </div>
-          {loading.summary ? (
+          {loading.summary && !refreshing ? (
             <div className="flex min-h-24 items-center justify-center rounded-xl border bg-muted/30 text-sm text-muted-foreground" aria-live="polite"><Loader2 className="mr-2 animate-spin" /> Đang tải thông tin kiện…</div>
           ) : summary ? (
             <section className="space-y-4 rounded-xl border bg-muted/20 p-4" aria-labelledby="package-summary-title" data-testid="package-summary">
@@ -181,6 +214,6 @@ export function LookupForm() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </fieldset>
   );
 }
