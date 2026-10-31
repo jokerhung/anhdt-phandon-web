@@ -9,10 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { clearLookupPreference } from "@/lib/lookup-preference";
 
-export function LoginForm() {
+export function LoginForm({ initialError = "" }: { initialError?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState("");
+  const nextPath = searchParams.get("next") ?? "/";
+  // Submit gốc của trình duyệt (khi JS chưa hydrate) không gửi được body JSON,
+  // nên giữ `next` trên action để route vẫn redirect đúng sau khi đăng nhập.
+  const formAction = `/api/auth/login?next=${encodeURIComponent(nextPath)}`;
+  const [error, setError] = useState(initialError);
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -36,7 +40,7 @@ export function LoginForm() {
         body: JSON.stringify({
           username: form.get("username"),
           password: form.get("password"),
-          next: searchParams.get("next") ?? "/",
+          next: nextPath,
         }),
       });
       if (!response.ok) {
@@ -78,7 +82,7 @@ export function LoginForm() {
   }
 
   return (
-    <form method="post" action="/api/auth/login" className="space-y-5" aria-labelledby="login-title" aria-describedby={error ? "login-error" : undefined} aria-busy={submitting} onSubmit={handleSubmit} noValidate>
+    <form method="post" action={formAction} className="space-y-5" aria-labelledby="login-title" aria-describedby={error ? "login-error" : undefined} aria-busy={submitting} onSubmit={handleSubmit} noValidate>
       <div className="space-y-2">
         <Label htmlFor="username">Tên đăng nhập</Label>
         <Input id="username" name="username" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} enterKeyHint="next" required maxLength={128} placeholder="Nhập tên đăng nhập" />

@@ -39,6 +39,25 @@ test("form đăng nhập chạy thật và logout thu hồi phiên", async ({ pa
   await expect(page).toHaveURL(/\/login\?next=/);
 });
 
+test("submit form gốc khi không có JS vẫn đăng nhập được", async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+
+  await page.goto("/login");
+  await page.getByLabel("Tên đăng nhập").fill("sai");
+  await page.getByLabel("Mật khẩu").fill("sai-mat-khau");
+  await page.getByRole("button", { name: "Đăng nhập" }).click();
+  await expect(page).toHaveURL(/\/login\?error=credentials/);
+  await expect(page.getByText("Thông tin đăng nhập không đúng.", { exact: true })).toBeVisible();
+
+  await page.getByLabel("Tên đăng nhập").fill("test-admin");
+  await page.getByLabel("Mật khẩu").fill("test-password-at-least-16-characters");
+  await page.getByRole("button", { name: "Đăng nhập" }).click();
+  await expect(page.getByRole("heading", { name: "Tra cứu kiện" })).toBeVisible();
+  expect((await context.cookies()).find((cookie) => cookie.name === "phan_don_session")?.httpOnly).toBe(true);
+  await context.close();
+});
+
 test("trang thử in ẩn toolbar trong print media và giữ tiếng Việt", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Tên đăng nhập").fill("test-admin");

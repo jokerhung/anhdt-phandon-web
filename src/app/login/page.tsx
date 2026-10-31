@@ -3,12 +3,21 @@ import { PackageSearch, ShieldCheck } from "lucide-react";
 import { LoginForm } from "@/components/LoginForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { hasAdminSession } from "@/lib/auth/auth-service";
+import { loginErrorMessage } from "@/lib/auth/login-messages";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   if (await hasAdminSession()) redirect("/");
+
+  const query = await searchParams;
+  const errorParam = Array.isArray(query.error) ? query.error[0] : query.error;
+  const initialError = loginErrorMessage(errorParam) ?? "";
 
   return (
     <main className="loginPage relative grid min-h-svh place-items-center bg-muted/40 px-4 py-6 sm:py-10">
@@ -32,7 +41,7 @@ export default async function LoginPage() {
             <CardDescription>Sử dụng tài khoản được cấu hình an toàn trên máy chủ.</CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
-            <LoginForm />
+            <LoginForm initialError={initialError} />
           </CardContent>
         </Card>
         <p className="text-center text-xs text-muted-foreground">Phiên đăng nhập có thời hạn và được bảo vệ bằng cookie HttpOnly.</p>
