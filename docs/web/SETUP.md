@@ -5,7 +5,7 @@
 - Node.js 22–24, **một process duy nhất**.
 - Reverse proxy HTTPS (Nginx/IIS/Caddy) chuyển tiếp tới `127.0.0.1:3000`.
 - Không dùng nhiều worker, PM2 cluster, nhiều container hoặc serverless: session và rate limit hiện nằm trong RAM của một process.
-- Service account Google chỉ có scope Drive/Sheets read-only và file JSON nằm ngoài repository/web root.
+- Service account Google có scope Drive read-only và Sheets read/write để tô màu ô Lô sau khi xác nhận đã in. Cấp quyền Chỉnh sửa cho service account trên file cần đánh dấu; file JSON nằm ngoài repository/web root.
 
 ## 2. Chuẩn bị
 

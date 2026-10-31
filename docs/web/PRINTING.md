@@ -1,5 +1,11 @@
 # Hướng dẫn in phiếu phân đơn
 
+## Đánh dấu kiện đã in
+
+Sau khi đóng hộp thoại in (nút In hoặc Ctrl+P), chọn **Đã in xong – tô cột Lô** nếu giấy đã in thành công. Nếu hủy in, chọn **Đã hủy / Chưa in**. Browser không tự xác nhận được kết quả máy in.
+
+Chức năng chỉ tô xanh nhạt ô **Lô** trên các hàng đúng cặp Lô/Kiện vừa in, không tô cột Kiện hay toàn hàng. Cần cấp quyền Chỉnh sửa Google Sheets cho service account. Khởi động lại server local sau khi cập nhật code để dùng scope Sheets mới. Dữ liệu kiện thay đổi so với phiếu sẽ yêu cầu tải lại và kiểm tra trước khi tô màu.
+
 ## Yêu cầu
 
 - Ưu tiên Chrome hoặc Edge mới trên máy tính đã cài driver máy in.

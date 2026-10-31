@@ -12,7 +12,7 @@ export function getGoogleClients(): GoogleClients {
   if (!credentials) throw new GoogleDataError("GOOGLE_CONFIG", "Máy chủ chưa cấu hình khóa Google service account.", 503);
   const auth = new google.auth.GoogleAuth({
     keyFile: credentials,
-    scopes: ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/spreadsheets.readonly"],
+    scopes: ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/spreadsheets"],
   });
   clients = { drive: google.drive({ version: "v3", auth }), sheets: google.sheets({ version: "v4", auth }) };
   return clients;

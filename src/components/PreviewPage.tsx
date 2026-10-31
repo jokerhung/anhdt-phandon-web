@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, Check, Clock3, FileSpreadsheet, Loader2, Ruler } from "lucide-react";
 import { PrintButton } from "@/components/PrintButton";
+import { PrintMarkConfirmation } from "@/components/PrintMarkConfirmation";
 import { SlipPreview } from "@/components/SlipPreview";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,7 @@ export function PreviewPage({ query, profile }: { query: PreviewQuery; profile: 
           <CardContent className="space-y-4 px-4 sm:px-6">
             <nav className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Chọn profile in">{PRINT_PROFILES.map((item) => <Button key={item} asChild variant={profile === item ? "default" : "outline"} className="h-auto justify-start whitespace-normal py-3"><Link aria-current={profile === item ? "page" : undefined} href={profileHref(item)}>{profile === item ? <Check /> : <Ruler />}<span className="text-left"><span className="block font-semibold">Profile {item.toUpperCase()}</span><span className={cn("block text-xs", profile === item ? "text-primary-foreground/75" : "text-muted-foreground")}>{PRINT_PROFILE_LABELS[item]}</span></span></Link></Button>)}</nav>
             <p className="text-sm text-muted-foreground">Có thể dùng nút In hoặc Ctrl+P. Trình duyệt không xác nhận chắc chắn giấy đã in thành công.</p>
+            {result?.printable ? <PrintMarkConfirmation key={`${result.snapshotId}:${query.lot}:${query.packageId}`} {...query} snapshotId={result.snapshotId} enabled={!printBlocked} /> : null}
           </CardContent>
         </Card>
         {loading ? <Alert><Loader2 className="animate-spin" /><AlertTitle>Đang dựng phiếu</AlertTitle><AlertDescription>Đang xác thực snapshot và tải dữ liệu phiếu…</AlertDescription></Alert> : null}

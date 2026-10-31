@@ -3,7 +3,7 @@ import type { Allocation, ParseResult, SheetRow } from "@/lib/domain/types";
 
 const FORMAT_ERROR = "Bảng này không đúng định dạng phân đơn";
 
-function parseHeader(value: string): string {
+export function parseHeader(value: string): string {
   const normalized = normalizeHeader(value).replace(/\s+/g, " ");
   // Packing-list headers used by the 190926 source. Keep Q'TY/CTN
   // distinct: it is quantity per carton, not the row's total quantity.
