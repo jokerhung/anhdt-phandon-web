@@ -21,19 +21,23 @@ describe("real Android fixture parity", () => {
     expect(index.rows("106 THC", "165")).toHaveLength(4);
   });
 
-  it("mọi slip giữ order/balance, có 79 kiện chưa phân bổ và phiếu 4 SKU", () => {
+  it("mọi slip giữ order/balance và đủ SKU, kể cả kiện chưa phân bổ", () => {
     const parsed = parseSheet(snapshot.valuesResponse.values, snapshot.sheetTitle);
     if (!parsed.ok) throw new Error(parsed.message);
     const index = LabelIndex.fromRows(parsed.rows);
-    let empty = 0; let fourSku = 0;
+    let unallocatedPackages = 0; let fourSku = 0;
     for (const lot of index.lots()) for (const packageId of index.packages(lot)) {
       const rows = index.rows(lot, packageId);
       const slip = buildSlip(lot, packageId, rows);
-      if (!slip) { empty += 1; expect(rows.every((row) => row.allocations.every((a) => a.soLuong.trim() === ""))).toBe(true); continue; }
+      expect(slip).not.toBeNull();
+      if (!slip) continue;
+      // Tổng SKU phải bằng số SKU thực có trong kiện, không phụ thuộc phân bổ.
+      expect(slip.totalSku).toBe(new Set(rows.map((row) => row.sku)).size);
       expect(slip.lines.reduce((sum, line) => sum + toIntOrZero(line.soLuong), 0) + slip.unallocated).toBe(rows.reduce((sum, row) => sum + toIntOrZero(row.slSheet), 0));
+      if (rows.every((row) => row.allocations.every((a) => a.soLuong.trim() === ""))) unallocatedPackages += 1;
       if (slip.totalSku === 4) fourSku += 1;
     }
-    expect(empty).toBe(79);
+    expect(unallocatedPackages).toBe(79);
     expect(fourSku).toBeGreaterThan(0);
   });
 });

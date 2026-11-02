@@ -3,9 +3,15 @@ import type { SheetRow, Slip, SlipLine } from "@/lib/domain/types";
 
 export function buildSlip(lo: string, kien: string, rows: SheetRow[], date?: string): Slip | null {
   const matching = rows.filter((row) => row.lo === lo && row.kien === kien);
-  const lines: SlipLine[] = matching.flatMap((row) => row.allocations
-    .filter((allocation) => allocation.soLuong.trim() !== "")
-    .map((allocation) => ({
+  // Every row of the package becomes a line, even when no customer was
+  // allocated. Without this, SKUs that only have stock (no distributor
+  // quantity) silently disappear from the slip and from Tổng SKU.
+  const lines: SlipLine[] = matching.flatMap((row) => {
+    const allocations = row.allocations.filter((allocation) => allocation.soLuong.trim() !== "");
+    if (allocations.length === 0) {
+      return [{ sku: row.sku, t: row.slSheet, khach: "", soLuong: "", ghiChu: "" }];
+    }
+    return allocations.map((allocation) => ({
       sku: row.sku,
       t: row.slSheet,
       khach: allocation.khach,
@@ -13,7 +19,8 @@ export function buildSlip(lo: string, kien: string, rows: SheetRow[], date?: str
       // Allocation depends only on the customer's quantity, never status text.
       // Keep the printable notes cell empty regardless of OK or other remarks.
       ghiChu: "",
-    })));
+    }));
+  });
   if (lines.length === 0) return null;
   return {
     lo, kien, lines,

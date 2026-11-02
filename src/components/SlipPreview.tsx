@@ -11,7 +11,9 @@ interface Props {
 }
 
 export function SlipPreview({ slip, label = "Phiếu phân đơn", className, printable = true, id }: Props) {
-  const customers = [...new Set(slip.lines.map((line) => line.khach))];
+  // Skip the placeholder customer used for lines that have no allocation so
+  // the table never gains a blank "KHÁCH" column.
+  const customers = [...new Set(slip.lines.map((line) => line.khach).filter((khach) => khach !== ""))];
   const rows: { sku: string; total: string; quantities: Map<string, string>; notes: string[] }[] = [];
   for (const line of slip.lines) {
     // Never add the repeated sheet total once per customer, or overwrite a duplicate allocation.
@@ -20,7 +22,9 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
       row = { sku: line.sku, total: line.t, quantities: new Map(), notes: [] };
       rows.push(row);
     }
-    row.quantities.set(line.khach, line.soLuong);
+    // A line with an empty customer marks an unallocated SKU: it keeps its
+    // TỔNG value and prints with empty customer cells instead of vanishing.
+    if (line.khach !== "") row.quantities.set(line.khach, line.soLuong);
     // Status/remark columns are intentionally not printed; allocation uses
     // only the customer name and numeric quantity.
   }

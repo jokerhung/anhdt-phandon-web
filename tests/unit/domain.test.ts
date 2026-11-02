@@ -51,7 +51,7 @@ describe("domain parity", () => {
     });
   });
 
-  it("bỏ qua dòng thiếu định danh và không tạo slip chưa phân bổ", () => {
+  it("bỏ qua dòng thiếu định danh và vẫn tạo slip cho kiện chỉ có tồn", () => {
     const bad = values.map((row) => [...row]);
     bad[2][0] = "";
     const skipped = parseSheet(bad);
@@ -61,6 +61,9 @@ describe("domain parity", () => {
     expect(skipped.rows.map((row) => row.lo)).toEqual(["701", "201"]);
     const parsed = parseSheet(values);
     if (!parsed.ok) throw new Error(parsed.message);
-    expect(buildSlip("701", "679", parsed.rows)).toBeNull();
+    // Kiện 701/679 không có khách nào nhận hàng nhưng vẫn phải ra phiếu với đủ SKU.
+    const slip = buildSlip("701", "679", parsed.rows);
+    expect(slip).toMatchObject({ totalSku: 1, unallocated: 0 });
+    expect(slip?.lines).toEqual([{ sku: "35971", t: "2", khach: "", soLuong: "", ghiChu: "" }]);
   });
 });
