@@ -263,7 +263,7 @@ export function LookupForm({ initialFileId, initialSheetId, initialLot }: { init
               {summary.warehousePackage ? <Alert><AlertDescription>Mã Kiện kho hiện tại của kiện này: <strong>{summary.warehousePackage}</strong>.</AlertDescription></Alert> : null}
               {summary.suggestedWarehousePackage ? <Alert variant="destructive">
                 <AlertDescription>
-                  Kiện chưa có nhà phân phối. Hãy ghi mã <strong>{summary.suggestedWarehousePackage}</strong> lên kiện, sau đó xác nhận để điền mã vào cột Kiện kho (BO) trên Google Sheet.
+                  Kiện chưa có nhà phân phối. Hãy ghi mã <strong className="align-middle text-[3em] font-bold leading-none">{summary.suggestedWarehousePackage}</strong> lên kiện, sau đó xác nhận để điền mã vào cột Kiện kho (BO) trên Google Sheet.
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <Button type="button" disabled={warehouseSaving} onClick={() => void assignWarehousePackage()}>{warehouseSaving ? "Đang ghi và tô màu…" : "Đã ghi mã lên kiện – điền mã và tô cột Lô"}</Button>
                   </div>

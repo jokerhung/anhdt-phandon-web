@@ -86,17 +86,30 @@
   font-family: Arial, "Noto Sans", sans-serif;
   font-size: 15pt;
 }
-.slipTitle { display: flex; justify-content: space-between; gap: 2mm; margin-bottom: 1mm; font-size: 10pt; line-height: 1.15; }
-.slipTitle > div { min-width: 0; overflow-wrap: anywhere; }
-.slipMeta { text-align: right; }
-.slipPackageValue { color: #dc2626; font-size: 2em; line-height: 1; }
+.slipTitle { display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: baseline; gap: 1mm; margin-bottom: 1mm; font-size: 12pt; line-height: 1.1; white-space: nowrap; }
+.slipTitle .slipValue { font-size: 16.2pt; font-weight: 700; }
+.slipPackageValue { color: #000000; }
 .slip table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .slip th, .slip td { border: 0.2mm solid black; padding: 0.3mm 0.5mm; vertical-align: middle; overflow-wrap: anywhere; white-space: pre-wrap; text-align: center; line-height: 1.2; font-weight: 400; }
 .slipContent { display: flow-root; zoom: var(--slip-fit, 1); }
 .slip thead { font-size: 9pt; }
-.slip tbody { font-size: 24pt; }
-.slip tbody td { line-height: 1.05; }
-.slip th.slipCustomer { text-align: left; }
+.slip tbody { font-size: 26pt; }
+.slip tbody td { line-height: 1.05; font-weight: 700; }
+.slip tbody td strong { font-weight: 700; }
+.slip tbody td:nth-child(2) { font-size: 20pt; }
+.slipPackageValue { font-weight: 700; }
+.slip th.slipCustomer { text-align: left; font-size: 26pt; line-height: 1.05; font-weight: 700; }
+.slip th.slipCustomer strong { font-weight: 700; }
+.slip th.slipCustomerLong { font-size: 20pt; }
+.slip th.slipCustomerTight { font-size: 22pt; }
+/* More than 3 agents: agent names drop 4 sizes, KHO drops 2. */
+.slip.slipMany th.slipCustomer { font-size: 22pt; }
+.slip.slipMany th.slipCustomerLong { font-size: 16pt; }
+.slip.slipMany th.slipCustomerTight { font-size: 18pt; }
+.slip.slipMany th.slipStock { font-size: 24pt; }
+.slip th.slipStock { font-size: 26pt; font-weight: 700; line-height: 1.05; }
+/* Arial has no weight above 700, so thicken glyphs with a stroke for far-away readability. */
+.slip tbody td strong, .slip th.slipCustomer strong, .slip th.slipStock { -webkit-text-stroke: 0.35mm currentColor; paint-order: stroke fill; }
 .slipFooter { margin-top: 1mm; font-size: 10pt; }
 .printInvalidMessage { display: none; }
 
@@ -124,3 +137,5 @@
 @page a4Profile { size: A4 landscape; margin: 0; }
 /* Custom 150 × 100 mm stock, not ISO A6 (148 × 105 mm). */
 @page a6Profile { size: 150mm 100mm; margin: 0; }
+.slipSep { font-weight: 700; }
+.slipTitle .slipWarehouseCode { font-size: 20pt; font-weight: 700; }

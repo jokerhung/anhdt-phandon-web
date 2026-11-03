@@ -22,11 +22,13 @@ export function buildSlip(lo: string, kien: string, rows: SheetRow[], date?: str
     }));
   });
   if (lines.length === 0) return null;
+  const warehouseCodes = [...new Set(matching.map((row) => row.kienKho.trim()).filter(Boolean))];
   return {
     lo, kien, lines,
     unallocated: matching.reduce((total, row) => total + toIntOrZero(row.ton), 0),
     totalSku: new Set(lines.map((line) => line.sku)).size,
     ...(date ? { date } : {}),
+    ...(warehouseCodes.length === 1 ? { kienKho: warehouseCodes[0] } : {}),
   };
 }
 

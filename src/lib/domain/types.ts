@@ -46,4 +46,6 @@ export interface Slip {
   unallocated: number;
   totalSku: number;
   date?: string;
+  /** Kiện kho code, set only when the package has one single code. */
+  kienKho?: string;
 }

@@ -13,6 +13,12 @@ interface Props {
   id?: string;
 }
 
+// dd/mm/yyyy -> dd-mm-yy; anything else is shown unchanged.
+function shortDate(date: string): string {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(date.trim());
+  return match ? `${match[1]}-${match[2]}-${match[3].slice(2)}` : date;
+}
+
 export function SlipPreview({ slip, label = "Phiếu phân đơn", className, printable = true, id }: Props) {
   const paperRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -29,13 +35,27 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
       const available = paperBounds.height - (Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom)) * zoom;
       const apply = (scale: number) => paper.style.setProperty("--slip-fit", String(scale));
       apply(1);
-      if (content.getBoundingClientRect().height <= available) return;
+      // Short agent names (<= 4 chars, 26pt) that would wrap drop four sizes to 22pt.
+      for (const th of content.querySelectorAll<HTMLElement>("th.slipCustomer:not(.slipCustomerLong)")) {
+        th.classList.remove("slipCustomerTight");
+        const text = th.firstElementChild as HTMLElement | null;
+        if (!text) continue;
+        text.style.whiteSpace = "nowrap";
+        const cell = getComputedStyle(th);
+        const room = th.clientWidth - Number.parseFloat(cell.paddingLeft) - Number.parseFloat(cell.paddingRight);
+        if (text.getBoundingClientRect().width / zoom > room) th.classList.add("slipCustomerTight");
+        text.style.whiteSpace = "";
+      }
+      // The one-line header must also fit horizontally; zoom widens the content's own box as it shrinks.
+      const title = content.querySelector<HTMLElement>(".slipTitle");
+      const fitsWidth = () => !title || title.scrollWidth <= title.clientWidth + 1;
+      if (content.getBoundingClientRect().height <= available && fitsWidth()) return;
       let low = 0;
       let high = 1;
       for (let step = 0; step < 16; step += 1) {
         const scale = (low + high) / 2;
         apply(scale);
-        if (content.getBoundingClientRect().height <= available - 1) low = scale;
+        if (content.getBoundingClientRect().height <= available - 1 && fitsWidth()) low = scale;
         else high = scale;
       }
       apply(low);
@@ -66,32 +86,36 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
   }
 
   return (
-    <article ref={paperRef} id={id} className={cn("slip shadow-xl shadow-black/10 print:shadow-none", !printable && "slipInvalid", className)} aria-label={label} data-print-valid={printable ? "true" : "false"}>
+    <article ref={paperRef} id={id} className={cn("slip shadow-xl shadow-black/10 print:shadow-none", customers.length > 3 && "slipMany", !printable && "slipInvalid", className)} aria-label={label} data-print-valid={printable ? "true" : "false"}>
       <div ref={contentRef} className="slipContent">
         <header className="slipTitle">
-          <div><div>LÔ: <strong className="slipValue">{slip.lo}</strong></div><div>KIỆN: <strong className="slipValue slipPackageValue">{slip.kien}</strong></div></div>
-          <div className="slipMeta"><div>{slip.date ? <>Ngày: <strong className="slipValue">{slip.date}</strong></> : null}</div><div>TỔNG SKU: <strong className="slipValue">{slip.totalSku}</strong></div></div>
+          <span>LÔ: <strong className="slipValue">{slip.lo}</strong></span>
+          <span className="slipSep" aria-hidden="true">|</span>
+          <span>KIỆN: <strong className="slipValue slipPackageValue">{slip.kien}</strong>{!customers.length && slip.kienKho ? <strong className="slipWarehouseCode"> ({slip.kienKho})</strong> : null}</span>
+          <span className="slipSep" aria-hidden="true">|</span>
+          <span>TỔNG SKU: <strong className="slipValue">{slip.totalSku}</strong></span>
+          {slip.date ? <><span className="slipSep" aria-hidden="true">|</span><span>Ngày: <strong className="slipValue">{shortDate(slip.date)}</strong></span></> : null}
         </header>
         <table>
           <colgroup>
-            <col style={{ width: "30%" }} /><col style={{ width: "12%" }} />
-            {customers.length ? customers.map((customer) => <col key={customer} style={{ width: `${46 / customers.length}%` }} />) : <col style={{ width: "46%" }} />}
-            <col style={{ width: "12%" }} />
+            <col style={{ width: "24%" }} /><col style={{ width: "10%" }} />
+            {customers.length ? customers.map((customer) => <col key={customer} style={{ width: `${51 / customers.length}%` }} />) : <col style={{ width: "51%" }} />}
+            <col style={{ width: "15%" }} />
           </colgroup>
           <thead>
-            <tr><th rowSpan={2} scope="col">SKU</th><th rowSpan={2} scope="col">SL</th><th colSpan={Math.max(customers.length, 1)} scope="colgroup">KHÁCH</th><th rowSpan={2} scope="col">TỒN</th></tr>
-            <tr>{customers.length ? customers.map((customer) => <th className="slipCustomer" key={customer} scope="col"><strong className="slipValue">{customer}</strong></th>) : <th scope="col">—</th>}</tr>
+            <tr><th rowSpan={2} scope="col">SKU</th><th rowSpan={2} scope="col">SL</th><th colSpan={Math.max(customers.length, 1)} scope="colgroup">KHÁCH</th><th rowSpan={2} scope="col" className="slipStock">KHO</th></tr>
+            <tr>{customers.length ? customers.map((customer) => <th className={cn("slipCustomer", [...customer].length > 4 && "slipCustomerLong")} key={customer} scope="col"><strong className="slipValue">{customer}</strong></th>) : <th scope="col">—</th>}</tr>
           </thead>
           <tbody>{rows.map((row, index) => (
             <tr key={`${row.sku}-${index}`}>
-              <td><strong className="slipValue">{row.sku}</strong></td><td><strong className="slipValue">{row.total}</strong></td>
+              <td><strong className="slipValue">{row.sku.slice(0, 8)}</strong></td><td><strong className="slipValue">{row.total}</strong></td>
               {customers.map((customer) => <td key={customer}>{row.quantities.get(customer) ? <strong className="slipValue">{row.quantities.get(customer)}</strong> : ""}</td>)}
               {!customers.length ? <td /> : null}
               <td><strong className="slipValue">{toIntOrZero(row.total) - [...row.quantities.values()].reduce((sum, quantity) => sum + toIntOrZero(quantity), 0)}</strong></td>
             </tr>
           ))}</tbody>
         </table>
-        {slip.unallocated > 0 ? <footer className="slipFooter">Tồn: {slip.unallocated}</footer> : null}
+        {slip.unallocated > 0 ? <footer className="slipFooter">KHO: {slip.unallocated}</footer> : null}
       </div>
     </article>
   );
