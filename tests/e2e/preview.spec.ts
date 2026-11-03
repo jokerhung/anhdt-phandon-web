@@ -26,6 +26,15 @@ test("prototype in đủ một trang A6/A7/A4, bỏ ghi chú và tăng chữ d�
   await expect(page.locator(".slip th")).not.toContainText(["GHI CHÚ"]);
   await expect(page.getByRole("columnheader", { name: "SL", exact: true })).toBeVisible();
   await expect(page.locator(".slip tbody")).toHaveCSS("font-size", "32px");
+  const expectLargeDataFont = async () => {
+    const actualSize = await page.locator(".slip").evaluate((paper) => {
+      const fit = Number(getComputedStyle(paper).getPropertyValue("--slip-fit"));
+      return Number.parseFloat(getComputedStyle(paper.querySelector("tbody strong")!).fontSize) * fit;
+    });
+    // Check the visible size after fitting, not just the inherited CSS font size.
+    expect(actualSize).toBeGreaterThanOrEqual(32);
+  };
+  await expectLargeDataFont();
   const expectContentFits = async () => {
     const fits = await page.locator(".slip").evaluate((paper) => {
       const bounds = paper.getBoundingClientRect();
@@ -50,6 +59,7 @@ test("prototype in đủ một trang A6/A7/A4, bỏ ghi chú và tăng chữ d�
   expect(a4.getPageCount()).toBe(1);
   await expectContentFits();
   expect(Math.abs(a4.getPage(0).getSize().width - mmToPoints(297))).toBeLessThan(1);
+  await expectLargeDataFont();
   expect(Math.abs(a4.getPage(0).getSize().height - mmToPoints(210))).toBeLessThan(1);
   await page.emulateMedia({ media: "screen" });
   await page.getByRole("link", { name: /Profile A6/ }).click();
@@ -60,6 +70,7 @@ test("prototype in đủ một trang A6/A7/A4, bỏ ghi chú và tăng chữ d�
   expect(a6.getPageCount()).toBe(1);
   await expectContentFits();
   expect(Math.abs(a6.getPage(0).getSize().width - mmToPoints(150))).toBeLessThan(1);
+  await expectLargeDataFont();
   expect(Math.abs(a6.getPage(0).getSize().height - mmToPoints(100))).toBeLessThan(1);
 
   // Stress the same layout with many SKU rows and trigger the Ctrl+P fit path.

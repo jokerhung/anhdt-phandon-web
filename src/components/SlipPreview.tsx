@@ -74,9 +74,9 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
         </header>
         <table>
           <colgroup>
-            <col style={{ width: "24%" }} /><col style={{ width: "14%" }} />
-            {customers.length ? customers.map((customer) => <col key={customer} style={{ width: `${48 / customers.length}%` }} />) : <col style={{ width: "48%" }} />}
-            <col style={{ width: "14%" }} />
+            <col style={{ width: "30%" }} /><col style={{ width: "12%" }} />
+            {customers.length ? customers.map((customer) => <col key={customer} style={{ width: `${46 / customers.length}%` }} />) : <col style={{ width: "46%" }} />}
+            <col style={{ width: "12%" }} />
           </colgroup>
           <thead>
             <tr><th rowSpan={2} scope="col">SKU</th><th rowSpan={2} scope="col">SL</th><th colSpan={Math.max(customers.length, 1)} scope="colgroup">KHÁCH</th><th rowSpan={2} scope="col">TỒN</th></tr>
