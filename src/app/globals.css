@@ -92,7 +92,9 @@
 .slipPackageValue { color: #dc2626; font-size: 2em; line-height: 1; }
 .slip table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .slip th, .slip td { border: 0.2mm solid black; padding: 0.3mm 0.5mm; vertical-align: middle; overflow-wrap: anywhere; white-space: pre-wrap; text-align: center; line-height: 1.2; font-weight: 400; }
-.slip th.slipCustomer, .slip td.slipNotes { text-align: left; }
+.slipContent { display: flow-root; zoom: var(--slip-fit, 1); }
+.slip tbody { font-size: 24pt; }
+.slip th.slipCustomer { text-align: left; }
 .slipFooter { margin-top: 3mm; }
 .printInvalidMessage { display: none; }
 

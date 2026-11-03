@@ -1,21 +1,13 @@
 import "server-only";
 import type { sheets_v4 } from "googleapis";
+import { getGoogleClients } from "@/lib/google/client";
+import { mapGoogleError } from "@/lib/google/errors";
+import { withGoogleRetry } from "@/lib/google/retry";
 import { nextWarehousePackageCode, parseHeader, parseSheet } from "@/lib/domain";
-import { SheetsService, quoteA1Title } from "@/lib/google/sheets-service";
+import { SheetsService } from "@/lib/google/sheets-service";
 import { DomainDataError } from "@/lib/server/api";
 import { refreshCatalogSheet } from "@/lib/server/catalog-cache";
 import { getSnapshotCache } from "@/lib/server/snapshot-cache";
-
-function columnName(index: number): string {
-  let value = index + 1;
-  let result = "";
-  while (value > 0) {
-    const remainder = (value - 1) % 26;
-    result = String.fromCharCode(65 + remainder) + result;
-    value = Math.floor((value - 1) / 26);
-  }
-  return result;
-}
 
 export async function assignWarehousePackage(fileId: string, sheetId: number, snapshotId: string, lot: string, packageId: string, code: string) {
   const expectedSnapshot = getSnapshotCache().getSnapshot(fileId, sheetId, snapshotId);
@@ -45,17 +37,33 @@ export async function assignWarehousePackage(fileId: string, sheetId: number, sn
   const skuColumn = header.indexOf("sku");
   if (warehouseColumn < 0) throw new DomainDataError("SHEET_FORMAT", "Không tìm thấy cột Kiện kho (BO) trong Google Sheet.");
 
-  const updates: sheets_v4.Schema$ValueRange[] = [];
+  const requests: sheets_v4.Schema$Request[] = [];
+  let updatedRows = 0;
   for (let rowIndex = parsed.headerRow + 1; rowIndex < live.rows.length; rowIndex += 1) {
     const row = live.rows[rowIndex];
     if (row[lotColumn] !== lot || row[packageColumn] !== packageId || !row[skuColumn]?.trim()) continue;
     const currentCode = row[warehouseColumn]?.trim() ?? "";
     if (currentCode && currentCode !== code) throw new DomainDataError("WAREHOUSE_PACKAGE_CONFLICT", `Cột Kiện kho của kiện ${packageId} đã có mã ${currentCode}.`, 409);
-    if (!currentCode) updates.push({ range: `${quoteA1Title(live.title)}!${columnName(warehouseColumn)}${rowIndex + 1}`, values: [[code]] });
+    if (!currentCode) {
+      requests.push({ updateCells: {
+        rows: [{ values: [{ userEnteredValue: { stringValue: code } }] }],
+        fields: "userEnteredValue",
+        start: { sheetId, rowIndex, columnIndex: warehouseColumn },
+      } });
+      updatedRows += 1;
+    }
+    requests.push({ repeatCell: {
+      range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: lotColumn, endColumnIndex: lotColumn + 1 },
+      cell: { userEnteredFormat: { backgroundColorStyle: { rgbColor: { red: 183 / 255, green: 225 / 255, blue: 205 / 255 } } } },
+      fields: "userEnteredFormat.backgroundColorStyle",
+    } });
   }
-  if (!updates.length) return { code, updatedRows: 0, alreadyAssigned: true };
+  if (!requests.length) throw new DomainDataError("PACKAGE_NOT_FOUND", "Không tìm thấy dòng của kiện cần ghi mã và tô màu.", 404);
 
-  await service.writeValues(fileId, updates);
+  // Write the warehouse code and color together, so a failed request cannot leave half the work done.
+  try {
+    await withGoogleRetry(() => getGoogleClients().sheets.spreadsheets.batchUpdate({ spreadsheetId: fileId, requestBody: { requests } }));
+  } catch (error) { throw mapGoogleError(error); }
   await refreshCatalogSheet(fileId, sheetId);
-  return { code, updatedRows: updates.length, alreadyAssigned: false };
+  return { code, updatedRows, alreadyAssigned: updatedRows === 0 };
 }

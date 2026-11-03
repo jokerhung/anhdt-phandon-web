@@ -146,10 +146,10 @@ export function LookupForm({ initialFileId, initialSheetId, initialLot }: { init
     try {
       const response = await fetch("/api/assign-warehouse-package", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId, sheetId: Number(sheetId), snapshotId, lot, packageId, code: summary.suggestedWarehousePackage }) });
       const body = await response.json() as { code?: string; updatedRows?: number; message?: string };
-      if (!response.ok) throw new Error(body.message ?? "Không thể ghi mã Kiện kho.");
+      if (!response.ok) throw new Error(body.message ?? "Không thể ghi mã Kiện kho và tô màu.");
       const code = body.code ?? summary.suggestedWarehousePackage;
       setSummary((current) => current ? { ...current, warehousePackage: code, suggestedWarehousePackage: "" } : current);
-      setWarehouseMessage(`Đã ghi mã Kiện kho ${code} vào ${body.updatedRows ?? 0} dòng trong Google Sheet.`);
+      setWarehouseMessage(`Đã ghi mã Kiện kho ${code} vào ${body.updatedRows ?? 0} dòng và tô xanh cột Lô của kiện trong Google Sheet.`);
     } catch (cause) { setWarehouseError(cause instanceof Error ? cause.message : "Không thể kết nối máy chủ."); }
     finally { setWarehouseSaving(false); }
   }
@@ -265,7 +265,7 @@ export function LookupForm({ initialFileId, initialSheetId, initialLot }: { init
                 <AlertDescription>
                   Kiện chưa có nhà phân phối. Hãy ghi mã <strong>{summary.suggestedWarehousePackage}</strong> lên kiện, sau đó xác nhận để điền mã vào cột Kiện kho (BO) trên Google Sheet.
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Button type="button" disabled={warehouseSaving} onClick={() => void assignWarehousePackage()}>{warehouseSaving ? "Đang ghi…" : "Đã ghi mã lên kiện – điền vào Google Sheet"}</Button>
+                    <Button type="button" disabled={warehouseSaving} onClick={() => void assignWarehousePackage()}>{warehouseSaving ? "Đang ghi và tô màu…" : "Đã ghi mã lên kiện – điền mã và tô cột Lô"}</Button>
                   </div>
                   {warehouseError ? <p className="mt-2 text-sm" role="alert">{warehouseError}</p> : null}
                 </AlertDescription>
