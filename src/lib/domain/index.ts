@@ -4,3 +4,4 @@ export * from "@/lib/domain/parser";
 export * from "@/lib/domain/label-index";
 export * from "@/lib/domain/slip-builder";
 export * from "@/lib/domain/package-summary";
+export * from "@/lib/domain/warehouse-package";

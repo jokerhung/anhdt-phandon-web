@@ -8,7 +8,7 @@ import { metadataCache } from "@/lib/google/metadata-cache";
 import { getEnv } from "@/lib/server/env";
 
 export interface SheetTab { sheetId: number; title: string }
-export interface SheetsLike { spreadsheets: { get(params: sheets_v4.Params$Resource$Spreadsheets$Get): Promise<{ data: sheets_v4.Schema$Spreadsheet }>; values: { get(params: sheets_v4.Params$Resource$Spreadsheets$Values$Get): Promise<{ data: sheets_v4.Schema$ValueRange }> } } }
+export interface SheetsLike { spreadsheets: { get(params: sheets_v4.Params$Resource$Spreadsheets$Get): Promise<{ data: sheets_v4.Schema$Spreadsheet }>; values: { get(params: sheets_v4.Params$Resource$Spreadsheets$Values$Get): Promise<{ data: sheets_v4.Schema$ValueRange }>; batchUpdate?: (params: sheets_v4.Params$Resource$Spreadsheets$Values$Batchupdate) => Promise<unknown> } } }
 
 export function quoteA1Title(title: string): string { return `'${title.replaceAll("'", "''")}'`; }
 
@@ -41,8 +41,17 @@ export class SheetsService {
   // Called after catalog preload has authorized the file and discovered tabs.
   async readTabValues(fileId: string, title: string): Promise<{ title: string; rows: string[][] }> {
     try {
-      const response = await withGoogleRetry(() => this.sheets.spreadsheets.values.get({ spreadsheetId: fileId, range: quoteA1Title(title), valueRenderOption: "FORMATTED_VALUE", majorDimension: "ROWS" }));
+      // BO is the warehouse-package column. Read through it explicitly so
+      // trailing BO values are available even when earlier columns are sparse.
+      const response = await withGoogleRetry(() => this.sheets.spreadsheets.values.get({ spreadsheetId: fileId, range: `${quoteA1Title(title)}!A:BO`, valueRenderOption: "FORMATTED_VALUE", majorDimension: "ROWS" }));
       return { title, rows: (response.data.values ?? []).map((row) => row.map((cell) => String(cell ?? ""))) };
+    } catch (error) { throw mapGoogleError(error); }
+  }
+
+  async writeValues(fileId: string, data: sheets_v4.Schema$ValueRange[]): Promise<void> {
+    try {
+      if (!this.sheets.spreadsheets.values.batchUpdate) throw new Error("Google Sheets write is unavailable");
+      await withGoogleRetry(() => this.sheets.spreadsheets.values.batchUpdate!({ spreadsheetId: fileId, requestBody: { valueInputOption: "RAW", data } }));
     } catch (error) { throw mapGoogleError(error); }
   }
 }

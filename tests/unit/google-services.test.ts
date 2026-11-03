@@ -25,6 +25,6 @@ describe("Google adapters", () => {
     const drive = { assertAllowed: vi.fn() };
     const service = new SheetsService(sheets, drive as never);
     expect(await service.readValues("file", 7)).toEqual({ title: "O'Brien", rows: [["00123"]] });
-    expect(sheets.spreadsheets.values.get).toHaveBeenCalledWith(expect.objectContaining({ range: "'O''Brien'", valueRenderOption: "FORMATTED_VALUE", majorDimension: "ROWS" }));
+    expect(sheets.spreadsheets.values.get).toHaveBeenCalledWith(expect.objectContaining({ range: "'O''Brien'!A:BO", valueRenderOption: "FORMATTED_VALUE", majorDimension: "ROWS" }));
   });
 });

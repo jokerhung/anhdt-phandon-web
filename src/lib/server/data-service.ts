@@ -1,5 +1,5 @@
 import "server-only";
-import { buildSlip, formatSlipDate, summarizePackageRows } from "@/lib/domain";
+import { buildSlip, formatSlipDate, nextWarehousePackageCode, summarizePackageRows } from "@/lib/domain";
 import { DomainDataError } from "@/lib/server/api";
 import { getEnv } from "@/lib/server/env";
 import { getSnapshotCache } from "@/lib/server/snapshot-cache";
@@ -18,7 +18,14 @@ export function getPackageSummary(fileId: string, sheetId: number, snapshotId: s
   const snapshot = getSnapshotCache().getSnapshot(fileId, sheetId, snapshotId);
   const rows = snapshot.index.rows(lot, packageId);
   if (rows.length === 0) throw new DomainDataError("PACKAGE_NOT_FOUND", "Kiện không tồn tại trong lô đã chọn.", 404);
-  return { lot, package: packageId, ...summarizePackageRows(rows), snapshotId, fetchedAt: snapshot.fetchedAt };
+  const summary = summarizePackageRows(rows);
+  const warehouseCodes = [...new Set(rows.map((row) => row.kienKho.trim()).filter(Boolean))];
+  const warehousePackage = warehouseCodes.length === 1 ? warehouseCodes[0] : "";
+  return {
+    lot, package: packageId, ...summary, warehousePackage,
+    suggestedWarehousePackage: summary.distributors.length === 0 && !warehousePackage ? nextWarehousePackageCode(snapshot.rows) : "",
+    snapshotId, fetchedAt: snapshot.fetchedAt,
+  };
 }
 
 export function getSlip(fileId: string, sheetId: number, snapshotId: string, lot: string, packageId: string, now = new Date()) {

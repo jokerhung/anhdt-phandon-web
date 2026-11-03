@@ -7,6 +7,7 @@ export interface Allocation {
 export interface SheetRow {
   lo: string;
   kien: string;
+  kienKho: string;
   sku: string;
   moTa: string;
   tenSheet: string;

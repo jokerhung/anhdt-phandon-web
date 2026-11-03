@@ -62,7 +62,7 @@ export function PreviewPage({ query, profile }: { query: PreviewQuery; profile: 
   }, [query.fileId, query.lot, query.packageId, query.sheetId, query.snapshotId, router, autoVersion]);
 
   const profileHref = (nextProfile: PrintProfile) => { const params = new URLSearchParams({ fileId: query.fileId, sheetId: query.sheetId, snapshotId: query.snapshotId, lot: query.lot, package: query.packageId, profile: nextProfile }); return `/preview?${params}`; };
-  const lookupHref = `/?${new URLSearchParams({ fileId: query.fileId, sheetId: query.sheetId })}`;
+  const lookupHref = `/?${new URLSearchParams({ fileId: query.fileId, sheetId: query.sheetId, lot: query.lot })}`;
   return (
     <main className={cn("previewPage min-h-svh bg-muted/40 px-4 py-6 sm:px-6 sm:py-10", `printProfile-${profile}`)}>
       <div className="noPrint mx-auto mb-6 w-full max-w-5xl space-y-4">

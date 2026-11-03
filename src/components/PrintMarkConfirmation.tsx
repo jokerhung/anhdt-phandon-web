@@ -47,10 +47,10 @@ export function PrintMarkConfirmation({ enabled, ...selection }: Props) {
       const response = await fetch("/api/mark-printed", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(selection),
       });
-      const body = await response.json() as { markedCells?: number; message?: string };
+      const body = await response.json() as { markedCells?: number; okCells?: number; message?: string };
       if (!response.ok) throw new Error(body.message ?? "Không thể tô màu. Vui lòng thử lại.");
       setAwaitingConfirmation(false);
-      setMessage(`Đã tô xanh nhạt ${body.markedCells} ô ở cột Lô của kiện ${selection.packageId}.`);
+      setMessage(`Đã tô màu các dòng của kiện ${selection.packageId} và ghi OK vào ${body.okCells ?? 0} ô cột Kiện kho (BO).`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Không thể kết nối máy chủ.");
     } finally { saving.current = false; setBusy(false); }

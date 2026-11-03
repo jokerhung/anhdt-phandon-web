@@ -89,6 +89,7 @@
 .slipTitle { display: flex; justify-content: space-between; gap: 2mm; margin-bottom: 4mm; font-size: inherit; line-height: 1.5; }
 .slipTitle > div { min-width: 0; overflow-wrap: anywhere; }
 .slipMeta { text-align: right; }
+.slipPackageValue { color: #dc2626; font-size: 2em; line-height: 1; }
 .slip table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .slip th, .slip td { border: 0.2mm solid black; padding: 0.3mm 0.5mm; vertical-align: middle; overflow-wrap: anywhere; white-space: pre-wrap; text-align: center; line-height: 1.2; font-weight: 400; }
 .slip th.slipCustomer, .slip td.slipNotes { text-align: left; }

@@ -32,6 +32,7 @@ export function parseSheet(values: string[][], sheetTitle = ""): ParseResult {
   const lo = col("lo");
   const kien = col("kien");
   const sku = col("sku");
+  const kienKho = col("kien kho");
   const sl = col("sl");
   const ton = col("ton");
   const moTa = col("description");
@@ -68,7 +69,7 @@ export function parseSheet(values: string[][], sheetTitle = ""): ParseResult {
     if ([lo, kien, sku].some((column) => cell(column).trim() === "")) continue;
     const allocations: Allocation[] = units.map((unit) => ({ khach: rawHeader[unit], soLuong: cell(unit), trangThai: cell(unit + 1) }));
     rows.push({
-      lo: cell(lo), kien: cell(kien), sku: cell(sku), moTa: moTa >= 0 ? cell(moTa) : "",
+      lo: cell(lo), kien: cell(kien), kienKho: kienKho >= 0 ? cell(kienKho) : "", sku: cell(sku), moTa: moTa >= 0 ? cell(moTa) : "",
       tenSheet: sheetTitle, slSheet: cell(sl), ton: ton >= 0 ? cell(ton) : "", allocations,
     });
   }

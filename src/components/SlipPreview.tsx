@@ -32,7 +32,7 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
   return (
     <article id={id} className={cn("slip shadow-xl shadow-black/10 print:shadow-none", !printable && "slipInvalid", className)} aria-label={label} data-print-valid={printable ? "true" : "false"}>
       <header className="slipTitle">
-        <div><div>LÔ: <strong className="slipValue">{slip.lo}</strong></div><div>KIỆN: <strong className="slipValue">{slip.kien}</strong></div></div>
+        <div><div>LÔ: <strong className="slipValue">{slip.lo}</strong></div><div>KIỆN: <strong className="slipValue slipPackageValue">{slip.kien}</strong></div></div>
         <div className="slipMeta"><div>{slip.date ? <>Ngày: <strong className="slipValue">{slip.date}</strong></> : null}</div><div>TỔNG SKU: <strong className="slipValue">{slip.totalSku}</strong></div></div>
       </header>
       <table>

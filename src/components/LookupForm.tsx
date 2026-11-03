@@ -9,19 +9,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { clearLookupPreference, saveLookupPreference } from "@/lib/lookup-preference";
+import { clearLookupPreference, readLookupPreference, saveLookupPreference } from "@/lib/lookup-preference";
 import { useSessionSheetRefresh } from "@/components/SessionSheetRefresh";
 
 type FileDto = { id: string; name: string; modifiedTime: string };
 type CatalogDto = { files: FileDto[]; fetchedAt: string; invalidSheets: number };
 type SheetDto = { sheetId: number; title: string };
-type PackageSummary = { lot: string; package: string; totalQuantity: number; allocatedQuantity: number; stockQuantity: number; distributors: Array<{ name: string; quantity: number }>; rowCount: number; snapshotId: string; fetchedAt: string };
+type PackageSummary = { lot: string; package: string; totalQuantity: number; allocatedQuantity: number; stockQuantity: number; distributors: Array<{ name: string; quantity: number }>; rowCount: number; warehousePackage: string; suggestedWarehousePackage: string; snapshotId: string; fetchedAt: string };
 type ApiError = { error?: string; message?: string };
 
 type LoadingKey = "files" | "sheets" | "lots" | "packages" | "summary" | "refresh";
 const initialLoading: Record<LoadingKey, boolean> = { files: false, sheets: false, lots: false, packages: false, summary: false, refresh: false };
 
-export function LookupForm({ initialFileId, initialSheetId }: { initialFileId?: string; initialSheetId?: number } = {}) {
+export function LookupForm({ initialFileId, initialSheetId, initialLot }: { initialFileId?: string; initialSheetId?: number; initialLot?: string } = {}) {
   const router = useRouter();
   const sessionRefresh = useSessionSheetRefresh();
   const controllers = useRef(new Map<LoadingKey, AbortController>());
@@ -34,6 +34,7 @@ export function LookupForm({ initialFileId, initialSheetId }: { initialFileId?: 
   const [fileId, setFileId] = useState(""); const [sheetId, setSheetId] = useState(""); const [lot, setLot] = useState(""); const [packageId, setPackageId] = useState("");
   const sessionUpdating = sessionRefresh.busy && sessionRefresh.fileId === fileId && String(sessionRefresh.sheetId) === sheetId;
   const [snapshotId, setSnapshotId] = useState(""); const [fetchedAt, setFetchedAt] = useState(""); const [summary, setSummary] = useState<PackageSummary | null>(null); const [error, setError] = useState(""); const [loading, setLoading] = useState(initialLoading);
+  const [warehouseSaving, setWarehouseSaving] = useState(false); const [warehouseMessage, setWarehouseMessage] = useState(""); const [warehouseError, setWarehouseError] = useState("");
   const [open, setOpen] = useState({ file: false, sheet: false, lot: false, package: false });
 
   const setBusy = (key: LoadingKey, value: boolean) => setLoading((current) => ({ ...current, [key]: value }));
@@ -74,20 +75,29 @@ export function LookupForm({ initialFileId, initialSheetId }: { initialFileId?: 
     setFileId(""); resetAfterFile();
     setFiles(result.files);
     setFetchedAt(result.fetchedAt); setInvalidSheets(result.invalidSheets);
-    // Restore only on an explicit return URL from preview, not a normal login.
-    if (!restoreSource || !initialFileId || !result.files.some((file) => file.id === initialFileId)) return;
-    setFileId(initialFileId);
-    saveLookupPreference(localStorage, { fileId: initialFileId });
-    const tabs = await request<{ sheets: SheetDto[] }>("sheets", `/api/sheets?fileId=${encodeURIComponent(initialFileId)}`);
+    const preference = readLookupPreference(localStorage);
+    const restoreFileId = initialFileId ?? (restoreSource ? preference?.fileId : undefined);
+    const restoreSheetId = initialSheetId ?? (restoreSource ? preference?.sheetId : undefined);
+    const restoreLot = initialLot ?? (restoreSource ? preference?.lot : undefined);
+    if (!restoreFileId || !result.files.some((file) => file.id === restoreFileId)) return;
+    setFileId(restoreFileId);
+    saveLookupPreference(localStorage, { fileId: restoreFileId });
+    const tabs = await request<{ sheets: SheetDto[] }>("sheets", `/api/sheets?fileId=${encodeURIComponent(restoreFileId)}`);
     if (!tabs || selectionRevision.current !== revision) return;
     setSheets(tabs.sheets);
-    if (initialSheetId === undefined || !tabs.sheets.some((sheet) => sheet.sheetId === initialSheetId)) return;
-    setSheetId(String(initialSheetId));
-    saveLookupPreference(localStorage, { fileId: initialFileId, sheetId: initialSheetId });
-    const lotsResult = await request<{ lots: string[]; snapshotId: string; fetchedAt: string }>("lots", `/api/lots?${new URLSearchParams({ fileId: initialFileId, sheetId: String(initialSheetId) })}`);
+    if (restoreSheetId === undefined || !tabs.sheets.some((sheet) => sheet.sheetId === restoreSheetId)) return;
+    setSheetId(String(restoreSheetId));
+    saveLookupPreference(localStorage, { fileId: restoreFileId, sheetId: restoreSheetId });
+    const lotsResult = await request<{ lots: string[]; snapshotId: string; fetchedAt: string }>("lots", `/api/lots?${new URLSearchParams({ fileId: restoreFileId, sheetId: String(restoreSheetId) })}`);
     if (!lotsResult || selectionRevision.current !== revision) return;
     setLots(lotsResult.lots); setSnapshotId(lotsResult.snapshotId); setFetchedAt(lotsResult.fetchedAt);
-  }, [request, initialFileId, initialSheetId]);
+    if (restoreLot && lotsResult.lots.includes(restoreLot)) {
+      setLot(restoreLot);
+      saveLookupPreference(localStorage, { fileId: restoreFileId, sheetId: restoreSheetId, lot: restoreLot });
+      const packageResult = await request<{ packages: string[] }>("packages", `/api/packages?${new URLSearchParams({ fileId: restoreFileId, sheetId: String(restoreSheetId), snapshotId: lotsResult.snapshotId, lot: restoreLot })}`);
+      if (packageResult && selectionRevision.current === revision) setPackages(packageResult.packages);
+    }
+  }, [request, initialFileId, initialSheetId, initialLot]);
 
   useEffect(() => {
     const activeControllers = controllers.current;
@@ -118,6 +128,7 @@ export function LookupForm({ initialFileId, initialSheetId }: { initialFileId?: 
     invalidateRequests(["packages", "summary"]);
     const revision = selectionRevision.current;
     setLot(next); resetAfterLot();
+    saveLookupPreference(localStorage, { fileId, sheetId: Number(sheetId), lot: next });
     const result = await request<{ packages: string[] }>("packages", `/api/packages?fileId=${encodeURIComponent(fileId)}&sheetId=${encodeURIComponent(sheetId)}&snapshotId=${encodeURIComponent(snapshotId)}&lot=${encodeURIComponent(next)}`);
     if (result && selectionRevision.current === revision) setPackages(result.packages);
   }
@@ -128,6 +139,19 @@ export function LookupForm({ initialFileId, initialSheetId }: { initialFileId?: 
     setPackageId(next); setSummary(null);
     const result = await request<PackageSummary>("summary", `/api/package-summary?fileId=${encodeURIComponent(fileId)}&sheetId=${encodeURIComponent(sheetId)}&snapshotId=${encodeURIComponent(snapshotId)}&lot=${encodeURIComponent(lot)}&package=${encodeURIComponent(next)}`);
     if (result && selectionRevision.current === revision) setSummary(result);
+  }
+  async function assignWarehousePackage() {
+    if (!summary?.suggestedWarehousePackage || warehouseSaving || !snapshotId) return;
+    setWarehouseSaving(true); setWarehouseMessage(""); setWarehouseError("");
+    try {
+      const response = await fetch("/api/assign-warehouse-package", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId, sheetId: Number(sheetId), snapshotId, lot, packageId, code: summary.suggestedWarehousePackage }) });
+      const body = await response.json() as { code?: string; updatedRows?: number; message?: string };
+      if (!response.ok) throw new Error(body.message ?? "Không thể ghi mã Kiện kho.");
+      const code = body.code ?? summary.suggestedWarehousePackage;
+      setSummary((current) => current ? { ...current, warehousePackage: code, suggestedWarehousePackage: "" } : current);
+      setWarehouseMessage(`Đã ghi mã Kiện kho ${code} vào ${body.updatedRows ?? 0} dòng trong Google Sheet.`);
+    } catch (cause) { setWarehouseError(cause instanceof Error ? cause.message : "Không thể kết nối máy chủ."); }
+    finally { setWarehouseSaving(false); }
   }
   async function refresh(sheetOnly = false, cacheOnly = false) {
     if (refreshLock.current) return;
@@ -236,6 +260,17 @@ export function LookupForm({ initialFileId, initialSheetId }: { initialFileId?: 
                 <p className="mb-2 text-sm font-medium">Nhà phân phối đã được phân</p>
                 {summary.distributors.length > 0 ? <ul className="grid gap-2 sm:grid-cols-2" aria-label="Nhà phân phối đã được phân">{summary.distributors.map((distributor) => <li key={distributor.name} className="flex min-h-11 items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2"><span className="min-w-0 break-words font-medium">{distributor.name}</span><Badge variant="secondary" className="shrink-0">{distributor.quantity.toLocaleString("vi-VN")}</Badge></li>)}</ul> : <Alert><AlertDescription>Kiện này chưa được phân cho nhà phân phối nào.</AlertDescription></Alert>}
               </div>
+              {summary.warehousePackage ? <Alert><AlertDescription>Mã Kiện kho hiện tại của kiện này: <strong>{summary.warehousePackage}</strong>.</AlertDescription></Alert> : null}
+              {summary.suggestedWarehousePackage ? <Alert variant="destructive">
+                <AlertDescription>
+                  Kiện chưa có nhà phân phối. Hãy ghi mã <strong>{summary.suggestedWarehousePackage}</strong> lên kiện, sau đó xác nhận để điền mã vào cột Kiện kho (BO) trên Google Sheet.
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Button type="button" disabled={warehouseSaving} onClick={() => void assignWarehousePackage()}>{warehouseSaving ? "Đang ghi…" : "Đã ghi mã lên kiện – điền vào Google Sheet"}</Button>
+                  </div>
+                  {warehouseError ? <p className="mt-2 text-sm" role="alert">{warehouseError}</p> : null}
+                </AlertDescription>
+              </Alert> : null}
+              {warehouseMessage ? <p className="text-sm text-primary" role="status">{warehouseMessage}</p> : null}
             </section>
           ) : null}
           <div className="flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">

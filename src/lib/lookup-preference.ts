@@ -3,6 +3,7 @@ export const LOOKUP_PREFERENCE_KEY = "phan-don:last-source:v1";
 export interface LookupPreference {
   fileId: string;
   sheetId?: number;
+  lot?: string;
 }
 
 /** Only IDs are remembered. Names, sheet rows, snapshots and credentials are never stored. */
@@ -21,7 +22,12 @@ export function readLookupPreference(storage: Pick<Storage, "getItem" | "removeI
       storage.removeItem(LOOKUP_PREFERENCE_KEY);
       return null;
     }
-    return { fileId: parsed.fileId, ...(sheetId === undefined ? {} : { sheetId }) };
+    const lot = "lot" in parsed ? parsed.lot : undefined;
+    if (lot !== undefined && (typeof lot !== "string" || lot.length < 1 || lot.length > 256)) {
+      storage.removeItem(LOOKUP_PREFERENCE_KEY);
+      return null;
+    }
+    return { fileId: parsed.fileId, ...(sheetId === undefined ? {} : { sheetId }), ...(lot === undefined ? {} : { lot }) };
   } catch {
     return null;
   }
