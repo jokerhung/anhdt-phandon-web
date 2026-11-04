@@ -141,3 +141,6 @@
 .slip, .slip * { font-family: Arial, Helvetica, sans-serif; }
 .slip .slipWarehouseCode { font-size: 20pt; font-weight: 700; -webkit-text-stroke: 0; color: black; }
 .slip tbody td strong.slipQtyLong { font-size: 25pt; }
+/* More than 4 agents: agent quantity cells drop 2 sizes. */
+.slip.slipOver4 tbody td strong.slipQty { font-size: 24pt; }
+.slip.slipOver4 tbody td strong.slipQty.slipQtyLong { font-size: 23pt; }

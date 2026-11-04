@@ -87,7 +87,7 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
   }
 
   return (
-    <article ref={paperRef} id={id} className={cn("slip shadow-xl shadow-black/10 print:shadow-none", customers.length > 3 && "slipMany", !printable && "slipInvalid", className)} aria-label={label} data-print-valid={printable ? "true" : "false"}>
+    <article ref={paperRef} id={id} className={cn("slip shadow-xl shadow-black/10 print:shadow-none", customers.length > 3 && "slipMany", customers.length > 4 && "slipOver4", !printable && "slipInvalid", className)} aria-label={label} data-print-valid={printable ? "true" : "false"}>
       <div ref={contentRef} className="slipContent">
         <header className="slipTitle">
           <span>LÔ: <strong className="slipValue">{slip.lo}</strong></span>
@@ -108,7 +108,7 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
           <tbody>{rows.map((row, index) => (
             <tr key={`${row.sku}-${index}`}>
               <td><strong className="slipValue">{row.sku.slice(0, 8)}</strong></td><td><strong className="slipValue">{row.total}</strong></td>
-              {customers.map((customer) => <td key={customer}>{row.quantities.get(customer) ? <strong className={cn("slipValue", row.quantities.get(customer)!.trim().length > 2 && "slipQtyLong")}>{row.quantities.get(customer)}</strong> : ""}</td>)}
+              {customers.map((customer) => <td key={customer}>{row.quantities.get(customer) ? <strong className={cn("slipValue", "slipQty", row.quantities.get(customer)!.trim().length > 2 && "slipQtyLong")}>{row.quantities.get(customer)}</strong> : ""}</td>)}
               {!customers.length ? <td /> : null}
               <td><strong className="slipValue">{toIntOrZero(row.total) - [...row.quantities.values()].reduce((sum, quantity) => sum + toIntOrZero(quantity), 0)}</strong></td>
             </tr>
