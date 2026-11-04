@@ -282,7 +282,7 @@ export function LookupForm({ initialFileId, initialSheetId, initialLot }: { init
                   {warehouseError ? <p className="mt-2 text-sm" role="alert">{warehouseError}</p> : null}
                 </AlertDescription>
               </Alert> : null}
-              {summary.distributors.length === 1 && !summary.warehousePackage ? <Alert variant="destructive">
+              {summary.distributors.length === 1 && summary.stockQuantity === 0 && !summary.warehousePackage ? <Alert variant="destructive">
                 <AlertDescription>
                   Kiện này chỉ chia 1 đại lý: <strong className="align-middle text-[3em] font-bold leading-none">{summary.distributors[0].name}</strong>. Hãy viết tên đại lý lên kiện, sau đó bấm hoàn thành để tô màu cột Lô và điền OK vào cột Kiện kho (BO) trên Google Sheet.
                   <div className="mt-3 flex flex-wrap items-center gap-2">

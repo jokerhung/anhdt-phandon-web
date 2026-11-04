@@ -4,6 +4,7 @@ import { getGoogleClients } from "@/lib/google/client";
 import { mapGoogleError } from "@/lib/google/errors";
 import { withGoogleRetry } from "@/lib/google/retry";
 import { nextWarehousePackageCode, parseHeader, parseSheet } from "@/lib/domain";
+import { toIntOrZero } from "@/lib/domain/text";
 import { SheetsService } from "@/lib/google/sheets-service";
 import { DomainDataError } from "@/lib/server/api";
 import { refreshCatalogSheet } from "@/lib/server/catalog-cache";
@@ -19,6 +20,7 @@ export async function completeSingleDistributorPackage(fileId: string, sheetId: 
   if (!expected.length) throw new DomainDataError("PACKAGE_NOT_FOUND", "Kiện không tồn tại trong lô đã chọn.", 404);
   const distributors = new Set(expected.flatMap((row) => row.allocations.filter((allocation) => allocation.soLuong.trim() !== "").map((allocation) => allocation.khach)));
   if (distributors.size !== 1) throw new DomainDataError("NOT_SINGLE_DISTRIBUTOR", "Kiện này không phải kiện chỉ chia cho đúng 1 đại lý.");
+  if (expected.some((row) => toIntOrZero(row.ton) !== 0)) throw new DomainDataError("STOCK_REMAINING", "Kiện này còn tồn kho, chưa thể hoàn thành.");
 
   const live = await new SheetsService().readValues(fileId, sheetId, true);
   const parsed = parseSheet(live.rows, live.title);
