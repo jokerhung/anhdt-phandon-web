@@ -6,10 +6,10 @@ export function buildSlip(lo: string, kien: string, rows: SheetRow[], date?: str
   // Every row of the package becomes a line, even when no customer was
   // allocated. Without this, SKUs that only have stock (no distributor
   // quantity) silently disappear from the slip and from Tổng SKU.
-  const lines: SlipLine[] = matching.flatMap((row) => {
+  const lines: SlipLine[] = matching.flatMap((row, rowIndex) => {
     const allocations = row.allocations.filter((allocation) => allocation.soLuong.trim() !== "");
     if (allocations.length === 0) {
-      return [{ sku: row.sku, t: row.slSheet, khach: "", soLuong: "", ghiChu: "" }];
+      return [{ sku: row.sku, t: row.slSheet, khach: "", soLuong: "", ghiChu: "", row: rowIndex }];
     }
     return allocations.map((allocation) => ({
       sku: row.sku,
@@ -19,6 +19,7 @@ export function buildSlip(lo: string, kien: string, rows: SheetRow[], date?: str
       // Allocation depends only on the customer's quantity, never status text.
       // Keep the printable notes cell empty regardless of OK or other remarks.
       ghiChu: "",
+      row: rowIndex,
     }));
   });
   if (lines.length === 0) return null;

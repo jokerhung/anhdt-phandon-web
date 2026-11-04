@@ -70,12 +70,13 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
   // Skip the placeholder customer used for lines that have no allocation so
   // the table never gains a blank "KHÁCH" column.
   const customers = [...new Set(slip.lines.map((line) => line.khach).filter((khach) => khach !== ""))];
-  const rows: { sku: string; total: string; quantities: Map<string, string> }[] = [];
+  const rows: { key: number | undefined; sku: string; total: string; quantities: Map<string, string> }[] = [];
   for (const line of slip.lines) {
     // Never add the repeated sheet total once per customer, or overwrite a duplicate allocation.
-    let row = rows.find((item) => item.sku === line.sku && item.total === line.t && !item.quantities.has(line.khach));
+    // Lines carry their source sheet row, so same-SKU/same-SL rows are not merged into one.
+    let row = rows.find((item) => line.row !== undefined ? item.key === line.row : item.key === undefined && item.sku === line.sku && item.total === line.t && !item.quantities.has(line.khach));
     if (!row) {
-      row = { sku: line.sku, total: line.t, quantities: new Map() };
+      row = { key: line.row, sku: line.sku, total: line.t, quantities: new Map() };
       rows.push(row);
     }
     // A line with an empty customer marks an unallocated SKU: it keeps its
@@ -107,7 +108,7 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
           <tbody>{rows.map((row, index) => (
             <tr key={`${row.sku}-${index}`}>
               <td><strong className="slipValue">{row.sku.slice(0, 8)}</strong></td><td><strong className="slipValue">{row.total}</strong></td>
-              {customers.map((customer) => <td key={customer}>{row.quantities.get(customer) ? <strong className="slipValue">{row.quantities.get(customer)}</strong> : ""}</td>)}
+              {customers.map((customer) => <td key={customer}>{row.quantities.get(customer) ? <strong className={cn("slipValue", row.quantities.get(customer)!.trim().length > 2 && "slipQtyLong")}>{row.quantities.get(customer)}</strong> : ""}</td>)}
               {!customers.length ? <td /> : null}
               <td><strong className="slipValue">{toIntOrZero(row.total) - [...row.quantities.values()].reduce((sum, quantity) => sum + toIntOrZero(quantity), 0)}</strong></td>
             </tr>

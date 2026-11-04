@@ -33,8 +33,8 @@ describe("domain parity", () => {
     const slip = buildSlip("201", "6", parsed.rows, "08/07/2026");
     expect(slip).toMatchObject({ totalSku: 1, unallocated: 61, date: "08/07/2026" });
     expect(slip?.lines).toEqual([
-      { sku: "10372", t: "81", khach: "DLK", soLuong: "17", ghiChu: "" },
-      { sku: "10372", t: "81", khach: "THC", soLuong: "3", ghiChu: "" },
+      { sku: "10372", t: "81", khach: "DLK", soLuong: "17", ghiChu: "", row: 0 },
+      { sku: "10372", t: "81", khach: "THC", soLuong: "3", ghiChu: "", row: 0 },
     ]);
   });
 
@@ -64,6 +64,6 @@ describe("domain parity", () => {
     // Kiện 701/679 không có khách nào nhận hàng nhưng vẫn phải ra phiếu với đủ SKU.
     const slip = buildSlip("701", "679", parsed.rows);
     expect(slip).toMatchObject({ totalSku: 1, unallocated: 0 });
-    expect(slip?.lines).toEqual([{ sku: "35971", t: "2", khach: "", soLuong: "", ghiChu: "" }]);
+    expect(slip?.lines).toEqual([{ sku: "35971", t: "2", khach: "", soLuong: "", ghiChu: "", row: 0 }]);
   });
 });

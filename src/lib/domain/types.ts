@@ -37,6 +37,8 @@ export interface SlipLine {
   khach: string;
   soLuong: string;
   ghiChu: string;
+  /** Index of the source sheet row, so two rows with the same SKU and SL stay separate lines. */
+  row?: number;
 }
 
 export interface Slip {
