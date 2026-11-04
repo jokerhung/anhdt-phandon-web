@@ -10,7 +10,7 @@ import { DomainDataError } from "@/lib/server/api";
 import { getSlip } from "@/lib/server/data-service";
 import { getSnapshotCache } from "@/lib/server/snapshot-cache";
 
-export async function markPrinted(fileId: string, sheetId: number, snapshotId: string, lot: string, packageId: string) {
+export async function markPrinted(fileId: string, sheetId: number, snapshotId: string, lot: string, packageId: string, force = false) {
   const slip = getSlip(fileId, sheetId, snapshotId, lot, packageId);
   if (!slip.printable) throw new DomainDataError("UNALLOCATED", "Kiện chưa được phân bổ, không thể đánh dấu đã in.");
   const expected = getSnapshotCache().getSnapshot(fileId, sheetId, snapshotId).index.rows(lot, packageId);
@@ -19,7 +19,8 @@ export async function markPrinted(fileId: string, sheetId: number, snapshotId: s
   const parsed = parseSheet(data.rows, data.title);
   if (!parsed.ok) throw new DomainDataError("SHEET_FORMAT", parsed.message);
   const current = parsed.rows.filter((row) => row.lo === lot && row.kien === packageId);
-  if (JSON.stringify(current) !== JSON.stringify(expected)) {
+  // "force" lets the operator color the package anyway after the sheet changed; rows are still resolved from live data above.
+  if (!force && JSON.stringify(current) !== JSON.stringify(expected)) {
     throw new DomainDataError("PRINT_DATA_CHANGED", "Dữ liệu kiện đã thay đổi. Vui lòng tải lại phiếu và kiểm tra trước khi đánh dấu.", 409);
   }
   const header = data.rows[parsed.headerRow].map(parseHeader);

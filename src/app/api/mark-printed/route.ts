@@ -5,12 +5,12 @@ import { guardPost } from "@/lib/server/route-auth";
 import { markPrinted } from "@/lib/server/mark-printed";
 
 export const runtime = "nodejs";
-const schema = z.object({ fileId: fileIdSchema, sheetId: sheetIdSchema, snapshotId: snapshotIdSchema, lot: identifierSchema, packageId: identifierSchema });
+const schema = z.object({ fileId: fileIdSchema, sheetId: sheetIdSchema, snapshotId: snapshotIdSchema, lot: identifierSchema, packageId: identifierSchema, force: z.boolean().optional() });
 
 export async function POST(request: NextRequest) {
   const denied = await guardPost(request); if (denied) return denied;
   try {
     const body = schema.parse(await request.json());
-    return jsonNoStore(await markPrinted(body.fileId, body.sheetId, body.snapshotId, body.lot, body.packageId));
+    return jsonNoStore(await markPrinted(body.fileId, body.sheetId, body.snapshotId, body.lot, body.packageId, body.force ?? false));
   } catch (error) { return apiError(error); }
 }
