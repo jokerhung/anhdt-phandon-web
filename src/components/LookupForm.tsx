@@ -153,6 +153,18 @@ export function LookupForm({ initialFileId, initialSheetId, initialLot }: { init
     } catch (cause) { setWarehouseError(cause instanceof Error ? cause.message : "Không thể kết nối máy chủ."); }
     finally { setWarehouseSaving(false); }
   }
+  async function completeSingleDistributor() {
+    if (warehouseSaving || !snapshotId) return;
+    setWarehouseSaving(true); setWarehouseMessage(""); setWarehouseError("");
+    try {
+      const response = await fetch("/api/complete-single-distributor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId, sheetId: Number(sheetId), snapshotId, lot, packageId }) });
+      const body = await response.json() as { okCells?: number; message?: string };
+      if (!response.ok) throw new Error(body.message ?? "Không thể tô màu và điền OK.");
+      setSummary((current) => current ? { ...current, warehousePackage: "OK" } : current);
+      setWarehouseMessage(`Đã tô xanh cột Lô của kiện và điền OK vào ${body.okCells ?? 0} ô cột Kiện kho trong Google Sheet.`);
+    } catch (cause) { setWarehouseError(cause instanceof Error ? cause.message : "Không thể kết nối máy chủ."); }
+    finally { setWarehouseSaving(false); }
+  }
   async function refresh(sheetOnly = false, cacheOnly = false) {
     if (refreshLock.current) return;
     refreshLock.current = true; setRefreshing(true);
@@ -266,6 +278,15 @@ export function LookupForm({ initialFileId, initialSheetId, initialLot }: { init
                   Kiện chưa có nhà phân phối. Hãy ghi mã <strong className="align-middle text-[3em] font-bold leading-none">{summary.suggestedWarehousePackage}</strong> lên kiện, sau đó xác nhận để điền mã vào cột Kiện kho (BO) trên Google Sheet.
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <Button type="button" disabled={warehouseSaving} onClick={() => void assignWarehousePackage()}>{warehouseSaving ? "Đang ghi và tô màu…" : "Đã ghi mã lên kiện – điền mã và tô cột Lô"}</Button>
+                  </div>
+                  {warehouseError ? <p className="mt-2 text-sm" role="alert">{warehouseError}</p> : null}
+                </AlertDescription>
+              </Alert> : null}
+              {summary.distributors.length === 1 && !summary.warehousePackage ? <Alert variant="destructive">
+                <AlertDescription>
+                  Kiện này chỉ chia 1 đại lý: <strong className="align-middle text-[3em] font-bold leading-none">{summary.distributors[0].name}</strong>. Hãy viết tên đại lý lên kiện, sau đó bấm hoàn thành để tô màu cột Lô và điền OK vào cột Kiện kho (BO) trên Google Sheet.
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Button type="button" disabled={warehouseSaving} onClick={() => void completeSingleDistributor()}>{warehouseSaving ? "Đang tô màu và điền OK…" : "Hoàn thành – tô màu và điền OK"}</Button>
                   </div>
                   {warehouseError ? <p className="mt-2 text-sm" role="alert">{warehouseError}</p> : null}
                 </AlertDescription>

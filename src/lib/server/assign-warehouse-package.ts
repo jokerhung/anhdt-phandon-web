@@ -9,6 +9,58 @@ import { DomainDataError } from "@/lib/server/api";
 import { refreshCatalogSheet } from "@/lib/server/catalog-cache";
 import { getSnapshotCache } from "@/lib/server/snapshot-cache";
 
+/**
+ * Package allocated to exactly one distributor: after the name is written on the
+ * carton, color the Lô cell and fill "OK" into the empty Kiện kho (BO) cells.
+ */
+export async function completeSingleDistributorPackage(fileId: string, sheetId: number, snapshotId: string, lot: string, packageId: string) {
+  const expectedSnapshot = getSnapshotCache().getSnapshot(fileId, sheetId, snapshotId);
+  const expected = expectedSnapshot.index.rows(lot, packageId);
+  if (!expected.length) throw new DomainDataError("PACKAGE_NOT_FOUND", "Kiện không tồn tại trong lô đã chọn.", 404);
+  const distributors = new Set(expected.flatMap((row) => row.allocations.filter((allocation) => allocation.soLuong.trim() !== "").map((allocation) => allocation.khach)));
+  if (distributors.size !== 1) throw new DomainDataError("NOT_SINGLE_DISTRIBUTOR", "Kiện này không phải kiện chỉ chia cho đúng 1 đại lý.");
+
+  const live = await new SheetsService().readValues(fileId, sheetId, true);
+  const parsed = parseSheet(live.rows, live.title);
+  if (!parsed.ok) throw new DomainDataError("SHEET_FORMAT", parsed.message);
+  const current = parsed.rows.filter((row) => row.lo === lot && row.kien === packageId);
+  if (JSON.stringify(current) !== JSON.stringify(expected)) {
+    throw new DomainDataError("PACKAGE_DATA_CHANGED", "Dữ liệu kiện đã thay đổi. Vui lòng tải lại rồi kiểm tra lại.", 409);
+  }
+  const header = live.rows[parsed.headerRow].map(parseHeader);
+  const warehouseColumn = header.indexOf("kien kho");
+  const lotColumn = header.indexOf("lo");
+  const packageColumn = header.indexOf("kien");
+  const skuColumn = header.indexOf("sku");
+  if (warehouseColumn < 0) throw new DomainDataError("SHEET_FORMAT", "Không tìm thấy cột Kiện kho (BO) trong Google Sheet.");
+
+  const requests: sheets_v4.Schema$Request[] = [];
+  let okCells = 0;
+  for (let rowIndex = parsed.headerRow + 1; rowIndex < live.rows.length; rowIndex += 1) {
+    const row = live.rows[rowIndex];
+    if (row[lotColumn] !== lot || row[packageColumn] !== packageId || !row[skuColumn]?.trim()) continue;
+    if (!row[warehouseColumn]?.trim()) {
+      requests.push({ updateCells: {
+        rows: [{ values: [{ userEnteredValue: { stringValue: "OK" } }] }],
+        fields: "userEnteredValue",
+        start: { sheetId, rowIndex, columnIndex: warehouseColumn },
+      } });
+      okCells += 1;
+    }
+    requests.push({ repeatCell: {
+      range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowIndex + 1, startColumnIndex: lotColumn, endColumnIndex: lotColumn + 1 },
+      cell: { userEnteredFormat: { backgroundColorStyle: { rgbColor: { red: 183 / 255, green: 225 / 255, blue: 205 / 255 } } } },
+      fields: "userEnteredFormat.backgroundColorStyle",
+    } });
+  }
+  if (!requests.length) throw new DomainDataError("PACKAGE_NOT_FOUND", "Không tìm thấy dòng của kiện cần tô màu.", 404);
+  try {
+    await withGoogleRetry(() => getGoogleClients().sheets.spreadsheets.batchUpdate({ spreadsheetId: fileId, requestBody: { requests } }));
+  } catch (error) { throw mapGoogleError(error); }
+  await refreshCatalogSheet(fileId, sheetId);
+  return { okCells };
+}
+
 export async function assignWarehousePackage(fileId: string, sheetId: number, snapshotId: string, lot: string, packageId: string, code: string) {
   const expectedSnapshot = getSnapshotCache().getSnapshot(fileId, sheetId, snapshotId);
   const expected = expectedSnapshot.index.rows(lot, packageId);

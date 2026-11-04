@@ -91,8 +91,6 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
         <header className="slipTitle">
           <span>LÔ: <strong className="slipValue">{slip.lo}</strong></span>
           <span className="slipSep" aria-hidden="true">|</span>
-          <span>KIỆN: <strong className="slipValue slipPackageValue">{slip.kien}</strong>{!customers.length && slip.kienKho ? <strong className="slipWarehouseCode"> ({slip.kienKho})</strong> : null}</span>
-          <span className="slipSep" aria-hidden="true">|</span>
           <span>TỔNG SKU: <strong className="slipValue">{slip.totalSku}</strong></span>
           {slip.date ? <><span className="slipSep" aria-hidden="true">|</span><span>Ngày: <strong className="slipValue">{shortDate(slip.date)}</strong></span></> : null}
         </header>
@@ -103,8 +101,8 @@ export function SlipPreview({ slip, label = "Phiếu phân đơn", className, pr
             <col style={{ width: "15%" }} />
           </colgroup>
           <thead>
-            <tr><th rowSpan={2} scope="col">SKU</th><th rowSpan={2} scope="col">SL</th><th colSpan={Math.max(customers.length, 1)} scope="colgroup">KHÁCH</th><th rowSpan={2} scope="col" className="slipStock">KHO</th></tr>
-            <tr>{customers.length ? customers.map((customer) => <th className={cn("slipCustomer", [...customer].length > 4 && "slipCustomerLong")} key={customer} scope="col"><strong className="slipValue">{customer}</strong></th>) : <th scope="col">—</th>}</tr>
+            <tr><th scope="col">KIỆN</th><th rowSpan={2} scope="col">SL</th><th colSpan={Math.max(customers.length, 1)} scope="colgroup">KHÁCH</th><th rowSpan={2} scope="col" className="slipStock">KHO</th></tr>
+            <tr><th scope="row" className="slipPackageCell"><span className="slipPackageValue">{slip.kien}</span>{!customers.length && slip.kienKho ? <div className="slipWarehouseCode">{slip.kienKho}</div> : null}</th>{customers.length ? customers.map((customer) => <th className={cn("slipCustomer", [...customer].length > 4 && "slipCustomerLong")} key={customer} scope="col"><strong className="slipValue">{customer}</strong></th>) : <th scope="col">—</th>}</tr>
           </thead>
           <tbody>{rows.map((row, index) => (
             <tr key={`${row.sku}-${index}`}>

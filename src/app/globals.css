@@ -52,7 +52,7 @@
 @layer base {
   * { @apply border-border; }
   html, body { min-height: 100%; }
-  body { @apply m-0 bg-background text-foreground antialiased; font-family: Arial, "Noto Sans", sans-serif; }
+  body { @apply m-0 bg-background text-foreground antialiased; font-family: Arial, Helvetica, sans-serif; }
   button, input { font: inherit; }
 }
 
@@ -83,7 +83,7 @@
   background: white;
   border: 0;
   outline: 1px solid #bbb;
-  font-family: Arial, "Noto Sans", sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 15pt;
 }
 .slipTitle { display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: baseline; gap: 1mm; margin-bottom: 1mm; font-size: 12pt; line-height: 1.1; white-space: nowrap; }
@@ -98,7 +98,7 @@
 .slip tbody td strong { font-weight: 700; }
 .slip tbody td:nth-child(2) { font-size: 20pt; }
 .slipPackageValue { font-weight: 700; }
-.slip th.slipCustomer { text-align: left; font-size: 26pt; line-height: 1.05; font-weight: 700; }
+.slip th.slipCustomer { text-align: center; font-size: 26pt; line-height: 1.05; font-weight: 700; }
 .slip th.slipCustomer strong { font-weight: 700; }
 .slip th.slipCustomerLong { font-size: 20pt; }
 .slip th.slipCustomerTight { font-size: 22pt; }
@@ -107,9 +107,9 @@
 .slip.slipMany th.slipCustomerLong { font-size: 16pt; }
 .slip.slipMany th.slipCustomerTight { font-size: 18pt; }
 .slip.slipMany th.slipStock { font-size: 24pt; }
-.slip th.slipStock { font-size: 26pt; font-weight: 700; line-height: 1.05; }
+.slip th.slipStock, .slip th.slipPackageCell { font-size: 26pt; font-weight: 700; line-height: 1.05; }
 /* Arial has no weight above 700, so thicken glyphs with a stroke for far-away readability. */
-.slip tbody td strong, .slip th.slipCustomer strong, .slip th.slipStock { -webkit-text-stroke: 0.35mm currentColor; paint-order: stroke fill; }
+.slip tbody td strong, .slip th.slipCustomer strong, .slip th.slipStock, .slip th.slipPackageCell { -webkit-text-stroke: 0; }
 .slipFooter { margin-top: 1mm; font-size: 10pt; }
 .printInvalidMessage { display: none; }
 
@@ -138,4 +138,5 @@
 /* Custom 150 × 100 mm stock, not ISO A6 (148 × 105 mm). */
 @page a6Profile { size: 150mm 100mm; margin: 0; }
 .slipSep { font-weight: 700; }
-.slipTitle .slipWarehouseCode { font-size: 20pt; font-weight: 700; }
+.slip, .slip * { font-family: Arial, Helvetica, sans-serif; }
+.slip .slipWarehouseCode { font-size: 20pt; font-weight: 700; -webkit-text-stroke: 0; color: black; }
