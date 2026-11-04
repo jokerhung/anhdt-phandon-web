@@ -6,6 +6,7 @@ import { SheetsService } from "@/lib/google/sheets-service";
 import { withGoogleRetry } from "@/lib/google/retry";
 import { parseHeader, parseSheet } from "@/lib/domain/parser";
 import { toIntOrZero } from "@/lib/domain/text";
+import { sameRows } from "@/lib/domain/same-rows";
 import { DomainDataError } from "@/lib/server/api";
 import { getSlip } from "@/lib/server/data-service";
 import { getSnapshotCache } from "@/lib/server/snapshot-cache";
@@ -20,7 +21,7 @@ export async function markPrinted(fileId: string, sheetId: number, snapshotId: s
   if (!parsed.ok) throw new DomainDataError("SHEET_FORMAT", parsed.message);
   const current = parsed.rows.filter((row) => row.lo === lot && row.kien === packageId);
   // "force" lets the operator color the package anyway after the sheet changed; rows are still resolved from live data above.
-  if (!force && JSON.stringify(current) !== JSON.stringify(expected)) {
+  if (!force && !sameRows(current, expected)) {
     throw new DomainDataError("PRINT_DATA_CHANGED", "Dữ liệu kiện đã thay đổi. Vui lòng tải lại phiếu và kiểm tra trước khi đánh dấu.", 409);
   }
   const header = data.rows[parsed.headerRow].map(parseHeader);

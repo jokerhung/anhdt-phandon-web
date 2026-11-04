@@ -5,6 +5,7 @@ import { mapGoogleError } from "@/lib/google/errors";
 import { withGoogleRetry } from "@/lib/google/retry";
 import { nextWarehousePackageCode, parseHeader, parseSheet } from "@/lib/domain";
 import { toIntOrZero } from "@/lib/domain/text";
+import { sameRows } from "@/lib/domain/same-rows";
 import { SheetsService } from "@/lib/google/sheets-service";
 import { DomainDataError } from "@/lib/server/api";
 import { refreshCatalogSheet } from "@/lib/server/catalog-cache";
@@ -26,7 +27,7 @@ export async function completeSingleDistributorPackage(fileId: string, sheetId: 
   const parsed = parseSheet(live.rows, live.title);
   if (!parsed.ok) throw new DomainDataError("SHEET_FORMAT", parsed.message);
   const current = parsed.rows.filter((row) => row.lo === lot && row.kien === packageId);
-  if (JSON.stringify(current) !== JSON.stringify(expected)) {
+  if (!sameRows(current, expected)) {
     throw new DomainDataError("PACKAGE_DATA_CHANGED", "Dữ liệu kiện đã thay đổi. Vui lòng tải lại rồi kiểm tra lại.", 409);
   }
   const header = live.rows[parsed.headerRow].map(parseHeader);
@@ -76,7 +77,7 @@ export async function assignWarehousePackage(fileId: string, sheetId: number, sn
   const parsed = parseSheet(live.rows, live.title);
   if (!parsed.ok) throw new DomainDataError("SHEET_FORMAT", parsed.message);
   const current = parsed.rows.filter((row) => row.lo === lot && row.kien === packageId);
-  if (JSON.stringify(current) !== JSON.stringify(expected)) {
+  if (!sameRows(current, expected)) {
     throw new DomainDataError("PACKAGE_DATA_CHANGED", "Dữ liệu kiện đã thay đổi. Vui lòng tải lại rồi kiểm tra lại.", 409);
   }
   const nextCode = nextWarehousePackageCode(parsed.rows);
