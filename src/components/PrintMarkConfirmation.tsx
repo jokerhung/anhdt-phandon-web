@@ -48,14 +48,14 @@ export function PrintMarkConfirmation({ enabled, ...selection }: Props) {
       const response = await fetch("/api/mark-printed", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(force ? { ...selection, force: true } : selection),
       });
-      const body = await response.json() as { error?: string; markedCells?: number; okCells?: number; message?: string };
+      const body = await response.json() as { error?: string; markedCells?: number; okCells?: number; filterCleared?: boolean; message?: string };
       if (!response.ok) {
         // Only the stale-data conflict can be overridden; other errors stay blocked.
         setCanForce(body.error === "PRINT_DATA_CHANGED");
         throw new Error(body.message ?? "Không thể tô màu. Vui lòng thử lại.");
       }
       setAwaitingConfirmation(false); setCanForce(false);
-      setMessage(`Đã tô màu các dòng của kiện ${selection.packageId} và ghi OK vào ${body.okCells ?? 0} ô cột Kiện kho (BO).`);
+      setMessage(`Đã tô màu các dòng của kiện ${selection.packageId} và ghi OK vào ${body.okCells ?? 0} ô cột Kiện kho (BO).${body.filterCleared ? " (đã bỏ bộ lọc trên Google Sheet)" : ""}`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Không thể kết nối máy chủ.");
     } finally { saving.current = false; setBusy(false); }

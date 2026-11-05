@@ -145,11 +145,11 @@ export function LookupForm({ initialFileId, initialSheetId, initialLot }: { init
     setWarehouseSaving(true); setWarehouseMessage(""); setWarehouseError("");
     try {
       const response = await fetch("/api/assign-warehouse-package", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId, sheetId: Number(sheetId), snapshotId, lot, packageId, code: summary.suggestedWarehousePackage }) });
-      const body = await response.json() as { code?: string; updatedRows?: number; message?: string };
+      const body = await response.json() as { code?: string; updatedRows?: number; filterCleared?: boolean; message?: string };
       if (!response.ok) throw new Error(body.message ?? "Không thể ghi mã Kiện kho và tô màu.");
       const code = body.code ?? summary.suggestedWarehousePackage;
       setSummary((current) => current ? { ...current, warehousePackage: code, suggestedWarehousePackage: "" } : current);
-      setWarehouseMessage(`Đã ghi mã Kiện kho ${code} vào ${body.updatedRows ?? 0} dòng và tô xanh cột Lô của kiện trong Google Sheet.`);
+      setWarehouseMessage(`Đã ghi mã Kiện kho ${code} vào ${body.updatedRows ?? 0} dòng và tô xanh cột Lô của kiện trong Google Sheet.${body.filterCleared ? " (đã bỏ bộ lọc trên Google Sheet)" : ""}`);
     } catch (cause) { setWarehouseError(cause instanceof Error ? cause.message : "Không thể kết nối máy chủ."); }
     finally { setWarehouseSaving(false); }
   }
@@ -158,10 +158,10 @@ export function LookupForm({ initialFileId, initialSheetId, initialLot }: { init
     setWarehouseSaving(true); setWarehouseMessage(""); setWarehouseError("");
     try {
       const response = await fetch("/api/complete-single-distributor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileId, sheetId: Number(sheetId), snapshotId, lot, packageId }) });
-      const body = await response.json() as { okCells?: number; message?: string };
+      const body = await response.json() as { okCells?: number; filterCleared?: boolean; message?: string };
       if (!response.ok) throw new Error(body.message ?? "Không thể tô màu và điền OK.");
       setSummary((current) => current ? { ...current, warehousePackage: "OK" } : current);
-      setWarehouseMessage(`Đã tô xanh cột Lô của kiện và điền OK vào ${body.okCells ?? 0} ô cột Kiện kho trong Google Sheet.`);
+      setWarehouseMessage(`Đã tô xanh cột Lô của kiện và điền OK vào ${body.okCells ?? 0} ô cột Kiện kho trong Google Sheet.${body.filterCleared ? " (đã bỏ bộ lọc trên Google Sheet)" : ""}`);
     } catch (cause) { setWarehouseError(cause instanceof Error ? cause.message : "Không thể kết nối máy chủ."); }
     finally { setWarehouseSaving(false); }
   }

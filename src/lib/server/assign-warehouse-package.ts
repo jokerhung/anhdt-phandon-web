@@ -1,8 +1,7 @@
+import { applyUpdatesClearingFilter } from "@/lib/google/apply-updates";
 import "server-only";
 import type { sheets_v4 } from "googleapis";
-import { getGoogleClients } from "@/lib/google/client";
 import { mapGoogleError } from "@/lib/google/errors";
-import { withGoogleRetry } from "@/lib/google/retry";
 import { nextWarehousePackageCode, parseHeader, parseSheet } from "@/lib/domain";
 import { toIntOrZero } from "@/lib/domain/text";
 import { sameRows } from "@/lib/domain/same-rows";
@@ -57,11 +56,12 @@ export async function completeSingleDistributorPackage(fileId: string, sheetId: 
     } });
   }
   if (!requests.length) throw new DomainDataError("PACKAGE_NOT_FOUND", "Không tìm thấy dòng của kiện cần tô màu.", 404);
+  let filterCleared = false;
   try {
-    await withGoogleRetry(() => getGoogleClients().sheets.spreadsheets.batchUpdate({ spreadsheetId: fileId, requestBody: { requests } }));
+    filterCleared = (await applyUpdatesClearingFilter(fileId, sheetId, requests)).filterCleared;
   } catch (error) { throw mapGoogleError(error); }
   await refreshCatalogSheet(fileId, sheetId);
-  return { okCells };
+  return { okCells, filterCleared };
 }
 
 export async function assignWarehousePackage(fileId: string, sheetId: number, snapshotId: string, lot: string, packageId: string, code: string) {
@@ -116,9 +116,10 @@ export async function assignWarehousePackage(fileId: string, sheetId: number, sn
   if (!requests.length) throw new DomainDataError("PACKAGE_NOT_FOUND", "Không tìm thấy dòng của kiện cần ghi mã và tô màu.", 404);
 
   // Write the warehouse code and color together, so a failed request cannot leave half the work done.
+  let filterCleared = false;
   try {
-    await withGoogleRetry(() => getGoogleClients().sheets.spreadsheets.batchUpdate({ spreadsheetId: fileId, requestBody: { requests } }));
+    filterCleared = (await applyUpdatesClearingFilter(fileId, sheetId, requests)).filterCleared;
   } catch (error) { throw mapGoogleError(error); }
   await refreshCatalogSheet(fileId, sheetId);
-  return { code, updatedRows, alreadyAssigned: updatedRows === 0 };
+  return { code, updatedRows, alreadyAssigned: updatedRows === 0, filterCleared };
 }

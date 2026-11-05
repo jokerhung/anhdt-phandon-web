@@ -1,9 +1,8 @@
+import { applyUpdatesClearingFilter } from "@/lib/google/apply-updates";
 import "server-only";
 import type { sheets_v4 } from "googleapis";
-import { getGoogleClients } from "@/lib/google/client";
 import { GoogleDataError, mapGoogleError } from "@/lib/google/errors";
 import { SheetsService } from "@/lib/google/sheets-service";
-import { withGoogleRetry } from "@/lib/google/retry";
 import { parseHeader, parseSheet } from "@/lib/domain/parser";
 import { toIntOrZero } from "@/lib/domain/text";
 import { sameRows } from "@/lib/domain/same-rows";
@@ -46,8 +45,9 @@ export async function markPrinted(fileId: string, sheetId: number, snapshotId: s
     return rowRequests;
   });
   if (!requests.length) throw new DomainDataError("PACKAGE_NOT_FOUND", "Không tìm thấy ô Lô của kiện cần đánh dấu.", 404);
+  let filterCleared = false;
   try {
-    await withGoogleRetry(() => getGoogleClients().sheets.spreadsheets.batchUpdate({ spreadsheetId: fileId, requestBody: { requests } }));
+    filterCleared = (await applyUpdatesClearingFilter(fileId, sheetId, requests)).filterCleared;
   } catch (error) {
     const mapped = mapGoogleError(error);
     if (mapped.code === "GOOGLE_FORBIDDEN") throw new GoogleDataError("GOOGLE_FORBIDDEN", "Không thể tô màu. Hãy cấp quyền Chỉnh sửa Google Sheets cho service account và kiểm tra vùng được bảo vệ.", 403);
@@ -57,5 +57,5 @@ export async function markPrinted(fileId: string, sheetId: number, snapshotId: s
   const okCells = shouldMarkWarehouseOk && warehouseColumn >= 0
     ? data.rows.filter((row, rowIndex) => rowIndex > parsed.headerRow && row[lotColumn] === lot && row[packageColumn] === packageId && row[skuColumn]?.trim() && !row[warehouseColumn]?.trim()).length
     : 0;
-  return { markedCells, okCells };
+  return { markedCells, okCells, filterCleared };
 }

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { parseSheet } from "@/lib/domain";
 
-const mocks = vi.hoisted(() => ({ read: vi.fn(), batch: vi.fn(), snapshot: vi.fn(), refresh: vi.fn() }));
-vi.mock("@/lib/google/client", () => ({ getGoogleClients: () => ({ sheets: { spreadsheets: { batchUpdate: mocks.batch } } }) }));
+const mocks = vi.hoisted(() => ({ read: vi.fn(), batch: vi.fn(), get: vi.fn(), snapshot: vi.fn(), refresh: vi.fn() }));
+vi.mock("@/lib/google/client", () => ({ getGoogleClients: () => ({ sheets: { spreadsheets: { batchUpdate: mocks.batch, get: mocks.get } } }) }));
 vi.mock("@/lib/google/sheets-service", () => ({ SheetsService: class { readValues = mocks.read; } }));
 vi.mock("@/lib/server/snapshot-cache", () => ({ getSnapshotCache: () => ({ getSnapshot: mocks.snapshot }) }));
 vi.mock("@/lib/server/catalog-cache", () => ({ refreshCatalogSheet: mocks.refresh }));
@@ -25,6 +25,7 @@ beforeEach(() => {
   mocks.read.mockResolvedValue({ title: "Tab", rows: values });
   mocks.snapshot.mockReturnValue({ index: { rows: () => parsed.rows.filter((row) => row.lo === "L1" && row.kien === "K1") } });
   mocks.batch.mockResolvedValue({});
+  mocks.get.mockResolvedValue({ data: { sheets: [{ properties: { sheetId: 7 } }] } });
 });
 
 describe("assign warehouse package", () => {
@@ -51,5 +52,14 @@ describe("assign warehouse package", () => {
     mocks.read.mockResolvedValue({ title: "Tab", rows: changed });
     await expect(assignWarehousePackage("file", 7, "snapshot", "L1", "K1", "1A1")).rejects.toMatchObject({ code: "PACKAGE_DATA_CHANGED" });
     expect(mocks.batch).not.toHaveBeenCalled();
+  });
+
+  it("clears an active filter before writing, keeping the filter range", async () => {
+    const range = { sheetId: 7, startRowIndex: 0, endRowIndex: 6, startColumnIndex: 0, endColumnIndex: 8 };
+    mocks.get.mockResolvedValue({ data: { sheets: [{ properties: { sheetId: 7 }, basicFilter: { range, criteria: { 0: { hiddenValues: ["L2"] } } } }] } });
+    await expect(assignWarehousePackage("file", 7, "snapshot", "L1", "K1", "1A1")).resolves.toMatchObject({ filterCleared: true });
+    const { requests } = mocks.batch.mock.calls[0][0].requestBody;
+    expect(requests[0]).toEqual({ setBasicFilter: { filter: { range } } });
+    expect(requests).toHaveLength(5);
   });
 });
